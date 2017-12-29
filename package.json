@@ -1,0 +1,43 @@
+{
+  "name": "my-showboat",
+  "version": "1.0.0",
+  "description": "## Description",
+  "main": "app.js",
+  "dependencies": {
+    "assert": "^1.4.1",
+    "body-parser": "^1.18.2",
+    "cors": "^2.8.4",
+    "del": "^3.0.0",
+    "dotenv": "^4.0.0",
+    "express": "^4.16.2",
+    "fs": "0.0.1-security",
+    "gulp": "^3.9.1",
+    "gulp-autoprefixer": "^4.0.0",
+    "gulp-concat": "^2.6.1",
+    "gulp-jshint": "^2.0.4",
+    "gulp-plumber": "^1.1.0",
+    "gulp-sass": "^3.1.0",
+    "gulp-sourcemaps": "^2.6.2",
+    "gulp-uglify": "^3.0.0",
+    "jshint": "^2.9.5",
+    "jshint-stylish": "^2.2.1",
+    "md5": "^2.2.1",
+    "mongodb": "^3.0.1",
+    "path": "^0.12.7",
+    "run-sequence": "^2.2.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PuppedToy/my-showboat.git"
+  },
+  "author": "Alejandro Alcázar",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/PuppedToy/my-showboat/issues"
+  },
+  "homepage": "https://github.com/PuppedToy/my-showboat#readme"
+}
