@@ -6,6 +6,8 @@ var config = require('./config');
 var responses = require('../lib/api-responses');
 var tools = require('../lib/api-tools');
 var md5 = require('md5');
+var TicketFactory = require('../lib/ticket-factory');
+var ticket_factory = new TicketFactory();
 
 function Controller(url) {
 
@@ -64,9 +66,6 @@ Controller.prototype.get_userlist = function(request, response) {
 	
 }
 
-/*
- * 
- */
 Controller.prototype.create_user = function(request, response) {
 
 	var user = request.body;
@@ -136,7 +135,8 @@ Controller.prototype.create_user = function(request, response) {
 					return;
 				}
 
-				responses.created(response);
+				var ticket = ticket_factory.add_ticket(user.name);
+				responses.created(response, {ticket: ticket.id});
 			});
 		});
 
@@ -171,8 +171,51 @@ Controller.prototype.delete_user = function(request, response) {
 
 Controller.prototype.user_login = function(request, response) {
 	
-	// TODO
-	response.sendFile( path.join( base_url, 'public', 'under_construction.html'));
+	MongoClient.connect(config.mongo_url, function(err, client) {
+
+		var db = client.db(config.mongo_name);
+
+		if(err) {
+			console.log(err);
+			responses.database_error(response);
+			return;
+		}
+
+		var user = request.body;
+
+		if(!user.name) {
+			responses.bad_request("Username is missing");
+			return;
+		}
+
+		if(!user.password) {
+			responses.bad_request("Password is missing");
+			return;
+		}
+
+		db.collection('users').findOne({name: user.name}, function(err, user_found) {
+
+			if(err) {
+				console.log(err);
+				responses.database_error(response);
+				return;		
+			}
+
+			if(!user_found) {
+				responses.not_found(response, "User requested does not exist");
+				return;
+			}
+
+			if(md5(user.password) === user_found.password) {
+				var ticket = ticket_factory.add_ticket(user.name);
+				responses.ok(response, {ticket: ticket.id});
+			} else {
+				responses.unauthorized(response);
+			}
+
+		});
+
+	});
 	
 }
 
