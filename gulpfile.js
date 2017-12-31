@@ -6,6 +6,7 @@ var concat = require('gulp-concat');
 var sourcemaps = require('gulp-sourcemaps');
 const autoprefixer = require('gulp-autoprefixer');
 var jshint = require('gulp-jshint');
+const imagemin = require('gulp-imagemin');
 var plumber = require('gulp-plumber');
 
 
@@ -54,6 +55,12 @@ gulp.task('build:js', function () {
         .pipe(gulp.dest(BUILD_PATH + '/js'));
 });
 
+gulp.task('build:images', function () {
+    return gulp.src(SOURCE_PATH + '/images/*')
+        .pipe(imagemin())
+        .pipe(gulp.dest(BUILD_PATH + '/images'));
+});
+
 gulp.task('clean', function (cb) {
     return del([
         BUILD_PATH + '/css',
@@ -65,7 +72,7 @@ gulp.task('clean', function (cb) {
 gulp.task('build', function (cb) {
     return runSequence(
         ['clean'],
-        ['build:sass',  'build:js'],
+        ['build:sass',  'build:js', 'build:images'],
         cb
     );
 });

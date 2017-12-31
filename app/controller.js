@@ -28,6 +28,12 @@ Controller.prototype.login = function(request, response) {
 
 }
 
+Controller.prototype.event_list = function(request, response) {
+
+	response.sendFile( path.join( base_url, 'public', 'event_list.html'));
+
+}
+
 Controller.prototype.get_userlist = function(request, response) {
 	
 	
@@ -184,12 +190,12 @@ Controller.prototype.user_login = function(request, response) {
 		var user = request.body;
 
 		if(!user.name) {
-			responses.bad_request("Username is missing");
+			responses.bad_request(response, "Username is missing");
 			return;
 		}
 
 		if(!user.password) {
-			responses.bad_request("Password is missing");
+			responses.bad_request(response, "Password is missing");
 			return;
 		}
 

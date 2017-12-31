@@ -3,6 +3,7 @@ module.exports = function (router, controller) {
 	/****** Indexing routes ******/
 	router.get('/', controller.index);
 	router.get('/login', controller.login);
+	router.get('/event_list', controller.event_list);
 
 
 	/****** API Endpoints ******/

@@ -13,6 +13,10 @@ $theme_color_2: #FFF1CC;
 // White
 $theme_color_3_rgba: rgba(255,255,255,1);
 $theme_color_3: #fff;
+// Brownie light
+$theme_color_4: #CEA18C;
+$theme_color_5: #6F5839;
+$theme_color_6: #6F522D;
 
 .main {
 	padding-top: 2.3%;
@@ -30,12 +34,6 @@ $theme_color_3: #fff;
 	background-size: cover;
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='$orange_1', endColorstr='$orange_2', GradientType=0 );
 
-	.aligner {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
 	.roundy {
 		width: 70%;
 		height: 70%;
@@ -49,16 +47,14 @@ $theme_color_3: #fff;
 		cursor: pointer;
 	}
 
-	.aligned {
-		max-width: 50%;
-	}
-
-	.aligned--top  {
-		align-self: flex-start;
-	}
-
-	.aligned--bottom {
-		align-self: flex-end;
+	.btn {
+		font-size: 5vw;
+		border-radius: 20%;
+		border-style: outset;
+		background-color: #fff1cc;
+		border-color: $theme_color_1;
+		border-style: outset;
+		border-width: 5px;
 	}
 
 	.roundy-container {
@@ -68,10 +64,87 @@ $theme_color_3: #fff;
 		}
 	}
 
+	.login-box {
+		margin-top: 60px;
+		margin-bottom: 60px;
+		//border-style: solid;
+		//border-color: black;
+		border-width: 1px;
+		//background-color: $theme_color_4;
+		width: 100%;
+		padding: 10px;
+
+		input {
+			width: 100%;
+			background-color: $theme_color_2;
+			padding-left: 5px;
+			padding-right: 5px;
+		}
+		font-size: 2vw;
+	}
+
+	.login-tabs {
+		width: 100%;
+		height: 10%;
+	}
+
+	.tab {
+		font-size: 2vw;
+		height: 100%;
+		background: linear-gradient(to top, $theme_color_2, $theme_color_3);
+		cursor: pointer;
+	}
+
+	.tab:hover {
+		background: linear-gradient(to top, $theme_color_1, $theme_color_3);
+	}
+
+	.tab-selected {
+		background: linear-gradient(to top, $theme_color_1, $theme_color_3);
+	}
+
+	.signup {
+		display: none;
+	}
+
+	.error {
+		margin-top: 10px;
+		display: none;
+	}
+
+	.help-icon {
+		height: 3vw;
+		width: 3vw;
+		cursor: help;
+	}
+
+}
+
+.aligner {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.aligned {
+	max-width: 50%;
+}
+
+.aligned--top  {
+	align-self: flex-start;
+}
+
+.aligned--bottom {
+	align-self: flex-end;
 }
 
 .height100 {
 	height: 100%;
+}
+
+.roundy-enter {
+	width: 50% !important;
+	font-size: 6vw !important;
 }
 
 .hw100 {
@@ -79,7 +152,21 @@ $theme_color_3: #fff;
 	width: 100%;
 }
 
+.no-padding {
+	padding: 0px;
+}
+
 header {
-	height: 5%;
+	height: 7%;
 	background-color: #FFC62D;
+
+	.btn {
+		background: -webkit-gradient(left top, left bottom, color-stop(0%, $theme_color_5), color-stop(50%, $theme_color_5), color-stop(51%, $theme_color_6), color-stop(100%, $theme_color_6));
+		background: -webkit-linear-gradient(top, $theme_color_5 0%, $theme_color_5 50%, $theme_color_6 51%, $theme_color_6 100%);
+		background: -o-linear-gradient(top, $theme_color_5 0%, $theme_color_5 50%, $theme_color_6 51%, $theme_color_6 100%);
+		background: -ms-linear-gradient(top, $theme_color_5 0%, $theme_color_5 50%, $theme_color_6 51%, $theme_color_6 100%);
+		background: linear-gradient(to bottom, $theme_color_5 0%, $theme_color_5 50%, $theme_color_6 51%, $theme_color_6 100%);
+		filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f85032', endColorstr='#e73827', GradientType=0 );
+		color: white;
+	}
 }

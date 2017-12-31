@@ -9,16 +9,98 @@
 	<link rel="stylesheet" href="assets/css/main.min.css">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script> 
-	<script type="text/javascript" src="assets/js/script.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+	<script type="text/javascript" src="assets/js/login.js"></script>
 </head>
 <body>
-	<header class="text-center"></header>
+	<header class="text-center">
+	</header>
 	<div class="main">
-		<div class="row">
+		<div class="row height100">
 			<div class="col-md-3"></div>
-			<div class="col-md-6">
-				Hello
-			</div>
+			<div class="col-md-6 height100">
+					<div class="login-tabs aligner">
+						<div class="row hw100 aligner">
+							<div class="col-6 col-xs-6 height100 no-padding">
+								<div id="tab-login" class="tab tab-selected text-center height100 aligner">
+									<div class="algined">Log in</div>
+								</div>
+							</div>
+							<div class="col-6 col-xs-6 height100 no-padding">
+								<div id="tab-signup" class="tab text-center height100 aligner">
+									<div class="algined">Sign up</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="alert alert-danger error">Error</div>
+					<div class="login hw100">
+						<div class="login-box">
+							<div class="row hw100 aligner">
+								<div class="col-6 col-xs-6">
+									<p>Name </p>
+								</div>
+								<div class="col-6 col-xs-6">
+									<p><input id="log_name" class="login-input" type="text"></p>
+								</div>
+							</div>
+							<div class="row hw100 aligner">
+								<div class="col-6 col-xs-6">
+									<p>Password </p>
+								</div>
+								<div class="col-6 col-xs-6">
+									<p><input id="log_password" class="login-input" type="password"></p>
+								</div>
+							</div>
+						</div>
+						<div class="text-center log-btn">
+							<div id="login-btn" class="btn text-center">
+								Log in
+							</div>
+						</div>
+					</div>
+					<div class="signup hw100">
+						<div class="login-box">
+							<div class="row hw100 aligner">
+								<div class="col-6 col-xs-6">
+									<p>Name </p>
+								</div>
+								<div class="col-6 col-xs-6">
+									<p><input id="sign_name" class="signup-input" type="text"></p>
+								</div>
+							</div>
+							<div class="row hw100 aligner">
+								<div class="col-6 col-xs-6">
+									<p>Password </p>
+								</div>
+								<div class="col-6 col-xs-6">
+									<p><input id="sign_password" class="signup-input" type="password"></p>
+								</div>
+							</div>
+							<div class="row hw100 aligner">
+								<div class="col-6 col-xs-6">
+									<p>Repeat password </p>
+								</div>
+								<div class="col-6 col-xs-6">
+									<p><input id="sign_repeat_password" class="signup-input" type="password"></p>
+								</div>
+							</div>
+							<div class="row hw100 aligner">
+								<div class="col-6 col-xs-6">
+									<p>Email <span title="Email is optional and it is only used to recover your password"><img src="./assets/images/help.png" class="help-icon"></span></p>
+								</div>
+								<div class="col-6 col-xs-6">
+									<p><input id="sign_email" class="signup-input" type="text"></p>
+								</div>
+							</div>
+						</div>
+						<div class="text-center log-btn">
+							<div id="signup-btn" class="btn text-center">
+								Register
+							</div>
+						</div>
+					</div>
+			</div>	
 			<div class="col-md-3"></div>
 		</div>
 	</div>
