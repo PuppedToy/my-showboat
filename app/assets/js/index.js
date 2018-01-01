@@ -1,10 +1,26 @@
 (function($) {
 
+	var ticket;
+
 	$(document).ready(function() {
-		$("#create").click(function() {
-			var getUrl = window.location;
-			window.location.href = getUrl.protocol + "//" + getUrl.host + "/login" ;
+
+		$(document).ready(function() {
+			checkConnection(function() {
+				ticket = Cookies.get("ticket");
+				setupLogout();
+
+				$("#create").off("click");
+				$("#create").on("click", function() {
+					window.location.href = "/event_list";
+				});
+			});
 		});
+
+	
+		$("#create").on("click", function() {
+			window.location.href = "/login";
+		});
+
 	});
 
 })(jQuery);

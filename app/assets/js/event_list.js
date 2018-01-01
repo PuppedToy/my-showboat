@@ -1,9 +1,18 @@
 (function($) {
 
-	var ticket = Cookies.get("ticket");
+	var ticket;
 
 	$(document).ready(function() {
-		// TODO
+		checkConnection(function() {
+			ticket = Cookies.get("ticket");
+			setupLogout();
+		}, function() {
+			window.location.href = "/";	
+		});
+
+
+		
+		
 	});
 
 })(jQuery);

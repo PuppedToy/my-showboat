@@ -54,8 +54,7 @@
 			success: function(response){
 				ticket = response.ticket;
 				Cookies.set('ticket', ticket, {expires: 1});
-				alert("Congrats! You logged in. Your ticket is " + ticket);
-				// TODO location href
+				window.location.href="/event_list";
 			},
 			error: function(response) {
 				if(response.status == 404 || response.status == 401) {
@@ -96,8 +95,7 @@
 			success: function(response){
 				ticket = response.ticket;
 				Cookies.set('ticket', ticket, {expires: 1});
-				alert("Congrats! You signed up. Your ticket is " + ticket);
-				// TODO location href
+				window.location.href="/event_list";
 			},
 			error: function(response) {
 				if(response.status == 500) {

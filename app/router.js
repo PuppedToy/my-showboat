@@ -14,6 +14,8 @@ module.exports = function (router, controller) {
 	router.put('/api/users/:userId', controller.edit_user);
 	router.delete('/api/users/:userId', controller.delete_user);
 	router.post('/api/login', controller.user_login);
+	router.post('/api/logout', controller.user_logout);
+	router.post('/api/check_ticket', controller.check_ticket);
 
 	// Events operations
 	router.get('/api/users/:userId/events', controller.get_eventlist);

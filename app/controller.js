@@ -142,7 +142,7 @@ Controller.prototype.create_user = function(request, response) {
 				}
 
 				var ticket = ticket_factory.add_ticket(user.name);
-				responses.created(response, {ticket: ticket.id});
+				responses.created(response, {ticket: ticket.id, id: instered_object._id});
 			});
 		});
 
@@ -214,7 +214,7 @@ Controller.prototype.user_login = function(request, response) {
 
 			if(md5(user.password) === user_found.password) {
 				var ticket = ticket_factory.add_ticket(user.name);
-				responses.ok(response, {ticket: ticket.id});
+				responses.ok(response, {ticket: ticket.id, id: user_found._id});
 			} else {
 				responses.unauthorized(response);
 			}
@@ -225,6 +225,40 @@ Controller.prototype.user_login = function(request, response) {
 	
 }
 
+Controller.prototype.user_logout = function(request, response) {
+
+	var ticket = request.body;
+
+	if(!ticket.ticket) {
+		responses.bad_request(response, "Ticket is missing");
+		return;
+	}
+
+	if(ticket_factory.remove_ticket(ticket.ticket)) {
+		responses.ok(response);
+	} else {
+		responses.not_found(response, "Ticket does not exist");
+	}
+
+}
+
+Controller.prototype.check_ticket = function(request, response) {
+
+	var ticket = request.body;
+
+	if(!ticket.ticket) {
+		responses.bad_request(response, "Ticket is missing");
+		return;
+	}
+
+	ticket = ticket_factory.get_ticket(ticket.ticket);
+	if(ticket) {
+		responses.ok(response, {name: ticket.name});
+	} else {
+		responses.not_found(response, "Ticket does not exist");
+	}
+
+}
 
 Controller.prototype.get_eventlist = function(request, response) {
 	
@@ -236,8 +270,85 @@ Controller.prototype.get_eventlist = function(request, response) {
 
 Controller.prototype.create_event = function(request, response) {
 	
+	var event = request.body;
+	var user_id = request.params.userId;
+
 	// TODO
-	response.sendFile( path.join( base_url, 'public', 'under_construction.html'));
+
+/*
+	if(!user.name) {
+		responses.bad_request(response, "Username is empty");
+		return;
+	}
+
+	if(user.name.length < 3) {
+		responses.bad_request(response, "Username must be greater than 2 characters");
+		return;
+	}
+
+	if(user.name.length > 20) {
+		responses.bad_request(response, "Username can't be greater than 20 characters");
+		return;
+	}
+
+	if(!user.password) {
+		responses.bad_request(response, "Password is empty");
+		return;
+	}
+
+	if(user.password.length < 8) {
+		responses.bad_request(response, "Password must be greater than 7 characters");
+		return;
+	}
+
+	if(user.password.length > 20) {
+		responses.bad_request(response, "Password can't be greater than 20 characters");
+		return;
+	}
+
+	if(user.email && !tools.validate_email(user.email)) {
+		responses.bad_request(response, "Email address is not valid");
+		return;
+	}
+
+	MongoClient.connect(config.mongo_url, function(err, client) {
+
+		var db = client.db(config.mongo_name);
+
+		if(err) {
+			console.log(err);
+			responses.database_error(response);
+			return;
+		}
+
+		db.collection('users').findOne({name: user.name}, function(err, entry) {
+			if(entry != null) {
+				responses.conflict(response, "Username already taken");
+				return;
+			}
+
+			var instered_object = {
+				name: user.name,
+				password: md5(user.password)
+			}
+
+			if(user.email) instered_object.email = user.email;
+
+			db.collection('users').insertOne(instered_object, function(err) {
+				if(err) {
+					console.log(err);
+					responses.database_error(response);
+					return;
+				}
+
+				var ticket = ticket_factory.add_ticket(user.name);
+				responses.created(response, {ticket: ticket.id});
+			});
+		});
+
+	});
+
+	*/
 	
 }
 
