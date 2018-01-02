@@ -138,6 +138,25 @@ $theme_color_6: #6F522D;
 		background-color: $theme_color_3;
 	}
 
+	.list-element {
+		border-style: dotted;
+		border-color: black;
+		border-width: 1px;
+		font-size: 20px;
+		background-color: $theme_color_2;
+		padding-left: 10px;
+		padding-right: 10px;
+		margin-bottom: 8px;
+		width: 100%;
+		text-align: left;
+		cursor: pointer;
+	}
+
+	.list-element-selected {
+		background-color: $theme_color_1;
+		border-style: solid;
+	}
+
 	.title {
 		height: 4%;
 		font-size: 30px;

@@ -54,6 +54,7 @@
 			success: function(response){
 				ticket = response.ticket;
 				Cookies.set('ticket', ticket, {expires: 1});
+				Cookies.set('user_uri', response.uri, {expires: 1});
 				window.location.href="/event_list";
 			},
 			error: function(response) {

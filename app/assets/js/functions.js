@@ -10,6 +10,7 @@ function checkConnection(callback, error_callback) {
 			contentType: "application/json; charset=utf-8",
 			dataType: "json",
 			success: function(response){
+				console.log(response);
 				$("#identity-header").html('Logged as&nbsp;<strong>' + response.name + '</strong>.&nbsp;<a id="logout-link">Log out</a>');
 				if(callback) callback(response);
 			},
@@ -43,15 +44,18 @@ function setupLogout() {
 			contentType: "application/json; charset=utf-8",
 			dataType: "json",
 			success: function(response){
-				Cookies.remove("ticket");
-				window.location.href = "/";
+				disconnect();
 			},
 			error: function(response) {
-				Cookies.remove("ticket");
-				window.location.href = "/";
+				disconnect();
 			}
 		});
 
 	});
 
+}
+
+function disconnect() {
+	Cookies.remove("ticket");
+	window.location.href = "/";
 }
