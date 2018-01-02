@@ -1,7 +1,8 @@
 var fs = require('fs');
 const path = require('path');
 var base_url;
-var MongoClient = require('mongodb').MongoClient;
+var mongo = require('mongodb');
+var MongoClient = mongo.MongoClient;
 var config = require('./config');
 var responses = require('../lib/api-responses');
 var tools = require('../lib/api-tools');
@@ -262,93 +263,128 @@ Controller.prototype.check_ticket = function(request, response) {
 
 Controller.prototype.get_eventlist = function(request, response) {
 	
-	// TODO
-	response.sendFile( path.join( base_url, 'public', 'under_construction.html'));
+	var user_id = request.params.userId;
+	var ticket = ticket_factory.get_ticket(request.body.ticket);
+
+	if(!ticket) {
+		responses.unauthorized(response, "Ticket given is not valid or has expired");
+		return;
+	}
+
+	MongoClient.connect(config.mongo_url, function(err, client) {
+
+		if(err) {
+			console.log(err);
+			responses.database_error(response);
+			return;		
+		}
+
+		var db = client.db(config.mongo_name);
+
+		db.collection('users').findOne({_id: new mongo.ObjectId(user_id)}, function(err, user_found) {
+			if(err) {
+				console.log(err);
+				responses.database_error(response);
+				client.close();
+				return;		
+			}
+
+			if(!user_found) {
+				responses.not_found(response, "User given does not exist");
+				client.close();
+				return;
+			}
+
+			if(ticket.name !== user_found.name) {
+				responses.unauthorized(response, "Ticket given is not valid or has expired");
+				client.close();
+				return;
+			}
+
+			var eventlist = [];
+
+			user_found.events.forEach(function(event) {
+				eventlist.push({
+					name: event.name,
+					uri: tools.get_base_uri(request) + "/api/users/" + user_id + "/events/" + event._id;
+				})
+			});
+
+			if(user_found.events) responses.ok(response, {events: eventlist});
+			else responses.ok(response, {events: []});
+
+			client.close();
+
+		});
+
+	});
 	
 }
 
 
 Controller.prototype.create_event = function(request, response) {
 	
-	var event = request.body;
 	var user_id = request.params.userId;
+	var ticket = ticket_factory.get_ticket(request.body.ticket);
 
-	// TODO
-
-/*
-	if(!user.name) {
-		responses.bad_request(response, "Username is empty");
-		return;
-	}
-
-	if(user.name.length < 3) {
-		responses.bad_request(response, "Username must be greater than 2 characters");
-		return;
-	}
-
-	if(user.name.length > 20) {
-		responses.bad_request(response, "Username can't be greater than 20 characters");
-		return;
-	}
-
-	if(!user.password) {
-		responses.bad_request(response, "Password is empty");
-		return;
-	}
-
-	if(user.password.length < 8) {
-		responses.bad_request(response, "Password must be greater than 7 characters");
-		return;
-	}
-
-	if(user.password.length > 20) {
-		responses.bad_request(response, "Password can't be greater than 20 characters");
-		return;
-	}
-
-	if(user.email && !tools.validate_email(user.email)) {
-		responses.bad_request(response, "Email address is not valid");
+	if(!ticket) {
+		responses.unauthorized(response, "Ticket given is not valid or has expired");
 		return;
 	}
 
 	MongoClient.connect(config.mongo_url, function(err, client) {
 
-		var db = client.db(config.mongo_name);
-
 		if(err) {
 			console.log(err);
 			responses.database_error(response);
-			return;
+			return;		
 		}
 
-		db.collection('users').findOne({name: user.name}, function(err, entry) {
-			if(entry != null) {
-				responses.conflict(response, "Username already taken");
+		var db = client.db(config.mongo_name);
+
+		db.collection('users').findOne({_id: new mongo.ObjectId(user_id)}, function(err, user_found) {
+			if(err) {
+				console.log(err);
+				responses.database_error(response);
+				client.close();
+				return;		
+			}
+
+			if(!user_found) {
+				responses.not_found(response, "User given does not exist");
+				client.close();
 				return;
 			}
 
-			var instered_object = {
-				name: user.name,
-				password: md5(user.password)
+			if(ticket.name !== user_found.name) {
+				responses.unauthorized(response, "Ticket given is not valid or has expired");
+				client.close();
+				return;
 			}
 
-			if(user.email) instered_object.email = user.email;
+			if(!user_found.events) user_found.events = [];
+			if(!user_found.event_id_count) user_found.event_id_count = 0;
+			var new_event = {_id: user_found.event_id_count++, name: "My New Event"};
+			user_found.events.push(new_event);
 
-			db.collection('users').insertOne(instered_object, function(err) {
+			db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
+
 				if(err) {
 					console.log(err);
 					responses.database_error(response);
+					client.close();
+					return;		
+				} else {
+					responses.ok(response, {id: new_event._id, name: new_event.name});
+					client.close();
 					return;
 				}
 
-				var ticket = ticket_factory.add_ticket(user.name);
-				responses.created(response, {ticket: ticket.id});
 			});
+
 		});
 
 	});
-
-	*/
 	
 }
 

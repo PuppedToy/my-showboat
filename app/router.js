@@ -17,15 +17,15 @@ module.exports = function (router, controller) {
 	router.post('/api/logout', controller.user_logout);
 	router.post('/api/check_ticket', controller.check_ticket);
 
-	// Events operations
-	router.get('/api/users/:userId/events', controller.get_eventlist);
+	// Events operations (require ticket)
+	router.post('/api/users/:userId/events/list', controller.get_eventlist);
 	router.post('/api/users/:userId/events', controller.create_event);
-	router.get('/api/users/:userId/events/:eventId', controller.get_event);
+	router.post('/api/users/:userId/events/:eventId', controller.get_event);
 	router.put('/api/users/:userId/events/:eventId', controller.edit_event);
 	router.delete('/api/users/:userId/events/:eventId', controller.delete_event);
-	router.get('/api/users/:userId/events/:eventId/logs', controller.get_loglist);
+	router.post('/api/users/:userId/events/:eventId/logs/list', controller.get_loglist);
 	router.post('/api/users/:userId/events/:eventId/logs', controller.create_log);
-	router.get('/api/users/:userId/events/:eventId/logs/:logId', controller.get_log);
+	router.post('/api/users/:userId/events/:eventId/logs/:logId', controller.get_log);
 	router.put('/api/users/:userId/events/:eventId/logs/:logId', controller.edit_log);
 	router.delete('/api/users/:userId/events/:eventId/logs/:logId', controller.delete_log);
 
