@@ -17,21 +17,27 @@ function Controller(url) {
 };
 
 
-Controller.prototype.index = function(request, response) {
+Controller.prototype.render_index = function(request, response) {
 
 	response.sendFile( path.join( base_url, 'public', 'index.html' ) );
 
 }
 
-Controller.prototype.login = function(request, response) {
+Controller.prototype.render_login = function(request, response) {
 
 	response.sendFile( path.join( base_url, 'public', 'login.html'));
 
 }
 
-Controller.prototype.event_list = function(request, response) {
+Controller.prototype.render_event_list = function(request, response) {
 
 	response.sendFile( path.join( base_url, 'public', 'event_list.html'));
+
+}
+
+Controller.prototype.render_edit_event = function(request, response) {
+
+	response.sendFile( path.join( base_url, 'public', 'edit_event.html'));
 
 }
 
@@ -254,7 +260,6 @@ Controller.prototype.check_ticket = function(request, response) {
 
 	ticket = ticket_factory.get_ticket(ticket.ticket);
 	if(ticket) {
-		console.log(ticket.user_id);
 		responses.ok(response, {name: ticket.name, id: ticket.user_id});
 	} else {
 		responses.not_found(response, "Ticket does not exist");
@@ -402,8 +407,75 @@ Controller.prototype.create_event = function(request, response) {
 
 Controller.prototype.get_event = function(request, response) {
 	
-	// TODO
-	response.sendFile( path.join( base_url, 'public', 'under_construction.html'));
+	var user_id = request.params.userId;
+	var event_id = request.params.eventId;
+	var ticket = ticket_factory.get_ticket(request.body.ticket);
+
+	if(!ticket) {
+		responses.unauthorized(response, "Ticket given is not valid or has expired");
+		return;
+	}
+
+	var object_id;
+	try {
+		object_id = new mongo.ObjectId(user_id);
+	} catch (err) {
+		responses.bad_request(response, "The user id is not valid");
+		return;
+	}
+
+	MongoClient.connect(config.mongo_url, function(err, client) {
+
+		if(err) {
+			console.log(err);
+			responses.database_error(response);
+			return;		
+		}
+
+		var db = client.db(config.mongo_name);
+
+		db.collection('users').findOne({_id: object_id}, function(err, user_found) {
+			if(err) {
+				console.log(err);
+				responses.database_error(response);
+				client.close();
+				return;		
+			}
+
+			if(!user_found) {
+				responses.not_found(response, "User given does not exist");
+				client.close();
+				return;
+			}
+
+			if(ticket.name !== user_found.name) {
+				responses.unauthorized(response, "Ticket given is not valid or has expired");
+				client.close();
+				return;
+			}
+
+			if(!user_found.events) user_found.events = [];
+
+			var event_found = null;
+
+			for(var i = 0; !event_found && i < user_found.events.length; i++) {
+				console.log(user_found.events[i]._id + " == " + event_id);
+				if(user_found.events[i]._id == event_id) {
+					event_found = user_found.events[i];
+				}
+			} 
+
+			if(event_found) {
+				responses.ok(response, event_found);
+			} else {
+				responses.not_found(response, "Event requested has not been found");
+			}
+
+			client.close();
+
+		});
+
+	});	
 	
 }
 

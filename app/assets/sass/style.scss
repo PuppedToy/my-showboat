@@ -131,7 +131,6 @@ $theme_color_6: #6F522D;
 		padding: 2%;
 		margin: 2%;
 		width: 95%;
-		height: 76%;
 		border-style: inset;
 		border-width: 2px;
 		border-color: $theme_color_1;
@@ -160,6 +159,18 @@ $theme_color_6: #6F522D;
 	.title {
 		height: 4%;
 		font-size: 30px;
+	}
+
+	.character_picture {
+		height: 200px;
+		width: 200px;
+		border-style: outset;
+		border-width: 2px;
+		border-color: $theme_color_1;
+		margin-right: auto;
+		margin-left: auto;
+		margin-top: 1%;
+		margin-bottom: 2%;
 	}
 
 	#event_info {
@@ -208,6 +219,18 @@ $theme_color_6: #6F522D;
 
 .height8 {
 	height: 8%;
+}
+
+.height76 {
+	height: 76%;
+}
+
+.height92 {
+	height: 92%;
+}
+
+.height95 {
+	height: 95%;
 }
 
 .width100 {

@@ -77,6 +77,15 @@
 
 			});
 
+			$("#edit_button").on("click", function() {
+				if(selected_event === undefined) {
+					alert("There is no event selected to edit!");
+					return;
+				}
+				Cookies.set("current_event", selected_event, {expires: 1});
+				window.location.href = "/edit_event";
+			});
+
 		}, function() {
 			window.location.href = "/";	
 		});

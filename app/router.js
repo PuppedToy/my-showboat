@@ -1,9 +1,10 @@
 module.exports = function (router, controller) {
 
 	/****** Indexing routes ******/
-	router.get('/', controller.index);
-	router.get('/login', controller.login);
-	router.get('/event_list', controller.event_list);
+	router.get('/', controller.render_index);
+	router.get('/login', controller.render_login);
+	router.get('/event_list', controller.render_event_list);
+	router.get('/edit_event', controller.render_edit_event);
 
 
 	/****** API Endpoints ******/

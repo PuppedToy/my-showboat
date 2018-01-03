@@ -10,7 +10,6 @@ function checkConnection(callback, error_callback) {
 			contentType: "application/json; charset=utf-8",
 			dataType: "json",
 			success: function(response){
-				console.log(response);
 				$("#identity-header").html('Logged as&nbsp;<strong>' + response.name + '</strong>.&nbsp;<a id="logout-link">Log out</a>');
 				if(callback) callback(response);
 			},
@@ -58,4 +57,8 @@ function setupLogout() {
 function disconnect() {
 	Cookies.remove("ticket");
 	window.location.href = "/";
+}
+
+function sample(array) {
+	return array[parseInt(Math.random()*array.length)];
 }
