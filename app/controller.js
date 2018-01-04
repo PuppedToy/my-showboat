@@ -482,8 +482,90 @@ Controller.prototype.get_event = function(request, response) {
 
 Controller.prototype.edit_event = function(request, response) {
 	
-	// TODO
-	response.sendFile( path.join( base_url, 'public', 'under_construction.html'));
+	var user_id = request.params.userId;
+	var event_id = request.params.eventId;
+	var ticket = ticket_factory.get_ticket(request.body.ticket);
+
+	if(!ticket) {
+		responses.unauthorized(response, "Ticket given is not valid or has expired");
+		return;
+	}
+
+	var object_id;
+	try {
+		object_id = new mongo.ObjectId(user_id);
+	} catch (err) {
+		responses.bad_request(response, "The user id is not valid");
+		return;
+	}
+
+	MongoClient.connect(config.mongo_url, function(err, client) {
+
+		if(err) {
+			console.log(err);
+			responses.database_error(response);
+			return;		
+		}
+
+		var db = client.db(config.mongo_name);
+
+		db.collection('users').findOne({_id: object_id}, function(err, user_found) {
+			if(err) {
+				console.log(err);
+				responses.database_error(response);
+				client.close();
+				return;		
+			}
+
+			if(!user_found) {
+				responses.not_found(response, "User given does not exist");
+				client.close();
+				return;
+			}
+
+			if(ticket.name !== user_found.name) {
+				responses.unauthorized(response, "Ticket given is not valid or has expired");
+				client.close();
+				return;
+			}
+
+			if(!user_found.events) user_found.events = [];
+
+			var event_found = null;
+
+			for(var i = 0; !event_found && i < user_found.events.length; i++) {
+				console.log(user_found.events[i]._id + " == " + event_id);
+				if(user_found.events[i]._id == event_id) {
+					event_found = user_found.events[i];
+				}
+			}
+
+			if(request.body.update) {
+				for(var key in request.body.update) {
+					event_found[key] = request.body.update[key];
+				}
+			}
+
+			if(event_found) {     db.collection('users').updateOne({_id:
+				user_found._id}, {$set: user_found}, function(err) {
+					if(err) {
+						console.log(err);
+						responses.database_error(response);
+						client.close();
+						return;		
+					}
+
+					responses.ok(response);
+				});
+			} else {
+				responses.not_found(response, "Event requested has not been found");
+			}
+
+			client.close();
+
+		});
+
+	});	
 	
 }
 
@@ -570,6 +652,14 @@ Controller.prototype.delete_event = function(request, response) {
 		});
 
 	});	
+}
+
+Controller.prototype.upload_image = function(request, response) {
+
+	console.log(request.url);
+
+	responses.created(response);
+
 }
 
 

@@ -30,6 +30,9 @@ module.exports = function (router, controller) {
 	router.put('/api/users/:userId/events/:eventId/logs/:logId', controller.edit_log);
 	router.delete('/api/users/:userId/events/:eventId/logs/:logId', controller.delete_log);
 
+	// Images operations
+	router.post('/api/images', controller.upload_image);
+
 	// Votes operations
 	router.get('/api/votes', controller.get_votelist);
 	router.post('/api/votes', controller.create_vote);

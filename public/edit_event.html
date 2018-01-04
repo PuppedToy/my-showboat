@@ -33,7 +33,7 @@
 				<h1 class="text-center">Step 1: Create the characters</h1>
 				<div class="row width100 height92">
 					<div class="col-6 col-xs-6 height100">
-						<div class="height76 list"></div>
+						<div id="character_list" class="height76 list"></div>
 						<div class="row text-center">
 							<div class="col-xs-6 col-6">
 								<div id="add_button" class="btn btn-font-sm">New</div>
@@ -44,8 +44,11 @@
 						</div>
 					</div>
 					<div class="col-6 col-xs-6 heigh100 text-center">
-						<div class="character_picture"></div>
-						Name: <input id="character_name" type="text">
+						<div class="character_picture">
+							<img id="character_picture" class="hw100">
+						</div>
+						<input class="file_selector" type="file" onchange="test()">
+						Name: <input id="character_name" accept='image/*' type="text">
 					</div>
 				</div>
 			</div>
