@@ -11,7 +11,7 @@
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script> 
 	<script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
 	<script type="text/javascript" src="assets/js/functions.js"></script>
-	<script type="text/javascript" src="assets/js/edit_event.js"></script>
+	<script type="text/javascript" src="assets/js/edit_event_step_1.js"></script>
 </head>
 <body>
 	<header class="text-center">
@@ -48,7 +48,11 @@
 							<img id="character_picture" class="hw100">
 						</div>
 						<input class="file_selector" type="file" onchange="test()">
-						Name: <input id="character_name" accept='image/*' type="text">
+						<div id="upload_button" class="btn btn-font-xs">Upload</div>
+						<div class="height20px"></div>
+						New Name: <input id="character_name" accept='image/*' type="text">
+						<div class="height20px"></div>
+						<div id="rename_button" class="btn btn-font-xs">Change name</div>
 					</div>
 				</div>
 			</div>

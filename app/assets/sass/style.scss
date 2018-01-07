@@ -62,6 +62,10 @@ $theme_color_6: #6F522D;
 		width: 80%;
 	}
 
+	.btn-font-xs {
+		font-size: 14px;
+	}
+
 	.btn-special {
 		background-color: $theme_color_1;
 	}
@@ -222,6 +226,10 @@ $theme_color_6: #6F522D;
 .hw100 {
 	height: 100%;
 	width: 100%;
+}
+
+.height20px {
+	height: 20px;
 }
 
 .height8 {

@@ -9,6 +9,7 @@ var tools = require('../lib/api-tools');
 var md5 = require('md5');
 var TicketFactory = require('../lib/ticket-factory');
 var ticket_factory = new TicketFactory();
+var formidable = require('formidable');
 
 function Controller(url) {
 
@@ -37,7 +38,9 @@ Controller.prototype.render_event_list = function(request, response) {
 
 Controller.prototype.render_edit_event = function(request, response) {
 
-	response.sendFile( path.join( base_url, 'public', 'edit_event.html'));
+	var step = request.query.step || 1;
+
+	response.sendFile( path.join( base_url, 'public', 'edit_event_step_' + step + '.html'));
 
 }
 
@@ -459,7 +462,6 @@ Controller.prototype.get_event = function(request, response) {
 			var event_found = null;
 
 			for(var i = 0; !event_found && i < user_found.events.length; i++) {
-				console.log(user_found.events[i]._id + " == " + event_id);
 				if(user_found.events[i]._id == event_id) {
 					event_found = user_found.events[i];
 				}
@@ -656,9 +658,24 @@ Controller.prototype.delete_event = function(request, response) {
 
 Controller.prototype.upload_image = function(request, response) {
 
-	console.log(request.url);
+	var form = new formidable.IncomingForm();
 
-	responses.created(response);
+	form.uploadDir = "./public/assets/custom_images";
+	form.keepExtensions = true;
+
+	form.parse(request, function (err, fields, files) {
+
+		console.log(files);
+
+		if(err) {
+			console.log(err);
+			responses.database_error(response);
+			return;
+		}
+
+		responses.ok(response);
+
+	});
 
 }
 

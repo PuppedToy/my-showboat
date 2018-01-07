@@ -52,6 +52,10 @@
 				window.location.href = "/event_list";
 			});
 
+			$("#next_arrow").on("click", function() {
+				window.location.href = "/edit_event?step=2";
+			});
+
 			$("#add_button").on("click", function() {
 				add_random_character();
 			});
@@ -59,7 +63,7 @@
 			$("#remove_button").on("click", function() {
 				if(selected_character === undefined) alert("There is no character selected");
 
-				var confirmation = confirm("Are you sure you want to delete character \"" + get_character(selected_character).name + "\"?");
+				var confirmation = confirm("Are you sure you want to delete character \"" + get_selected_character().name + "\"?");
 
 				if(!confirmation) return;
 
@@ -77,6 +81,20 @@
 					}
 				}
 			});
+
+			$("#upload_button").on("click", function() {
+				// TODO
+			});
+
+			$("#rename_button").on("click", function() {
+				rename_character();
+			});
+
+			$("#character_name").on("keypress", function(e) {
+				if(e.which === 13) {
+					rename_character();
+				}
+			})
 
 		}, function() {
 			disconnect();
@@ -98,17 +116,20 @@
 		});
 
 		if(selected_character !== undefined) {
-			var my_character = get_character(selected_character);
+			var my_character = get_selected_character();
 			$("#character_picture").attr("src", my_character.img);
 			$("#character_picture").show();
-			$("#character_name").val(my_character.name);
 			$(".file_selector").attr("disabled", false);
 		} else {
 			$("#character_picture").hide();
-			$("#character_name").val("");
 			$(".file_selector").attr("disabled", true);
 		}
+		$("#character_name").val("");
 
+	}
+
+	function get_selected_character() {
+		return get_character(selected_character);
 	}
 
 	function get_character(i) {
@@ -167,8 +188,20 @@
 		});
 	}
 
-})(jQuery);
+	function rename_character() {
+		var name_field = $("#character_name");
 
-function test() {
-	console.log($(".file_selector")[0].files);
-}
+		if(!name_field.val()) {
+			// TODO custom alert
+			alert("The name of this character can not be empty");
+			return;
+		}
+
+		get_selected_character().name = name_field.val();
+
+		save_characters(function() {
+			draw_characters();
+		});
+	}
+
+})(jQuery);
