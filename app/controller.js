@@ -318,18 +318,21 @@ Controller.prototype.get_eventlist = function(request, response) {
 				return;
 			}
 
-			var eventlist = [];
+			if(!user_found.events) {
+				responses.ok(response, {events: []});
+			} else {
+				var eventlist = [];
 
-			user_found.events.forEach(function(event) {
-				eventlist.push({
-					name: event.name,
-					uri: tools.get_base_uri(request) + "/api/users/" + user_id + "/events/" + event._id,
-					id: event._id
-				})
-			});
+				user_found.events.forEach(function(event) {
+					eventlist.push({
+						name: event.name,
+						uri: tools.get_base_uri(request) + "/api/users/" + user_id + "/events/" + event._id,
+						id: event._id
+					})
+				});
 
-			if(user_found.events) responses.ok(response, {events: eventlist});
-			else responses.ok(response, {events: []});
+				responses.ok(response, {events: eventlist});
+			}
 
 			client.close();
 
