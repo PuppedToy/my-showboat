@@ -184,6 +184,16 @@ $theme_color_6: #6F522D;
 		font-size: 18px;
 	}
 
+	.images-container {
+		border-style: solid;
+		border-width: 2px;
+		border-color: black;
+		background-color: white;
+		height: 99%;
+		padding: 10px;
+		overflow-y: auto;
+	}
+
 	#event_info {
 		padding: 2%;
 		font-size: 18px;
@@ -194,6 +204,10 @@ $theme_color_6: #6F522D;
 		margin: 2%;
 	}
 
+}
+
+.main-height {
+	height: 87%;
 }
 
 .aligner {
