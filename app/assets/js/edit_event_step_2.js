@@ -19,7 +19,15 @@
 				dataType: "json",
 				success: function(response){
 					characters = response.characters || [];
+					characters.forEach(function(character) {
+						if(!("group" in character)) {
+							character.group = -1;
+						}
+					});
 					console.log(characters);
+					// Save can finish at any time. We can draw now
+					save_characters();
+					draw_characters();
 				},
 				error: function(response) {
 					if(response.status == 401) {
@@ -42,6 +50,38 @@
 		});
 	});
 
+	function draw_characters() {
+
+		var sorted_characters = characters.slice();
+		var html = "";
+		sorted_characters.sort( function (character1, character2) {
+			return character2.group - character1.group;
+		});
+
+		characters.forEach(function(character) {
+			if(character.group < 0) {
+				html += "<div class='character' id='character-" + character._id + "'><div class='character-image'></div><div class='character-name'></div></div>";
+			}
+		});
+
+		$(".images-container").html(html);
+
+		characters.forEach(function(character) {
+			$("#character-" + character._id + " .character-image").css("background-image", "url(\"" + character.img + "\")");
+			$("#character-" + character._id + " .character-name").html(character.name);
+		});
+
+		$(".character").draggable();
+		$(".character").droppable( {
+			drop: function( event, ui ) {
+				// TODO
+		    	console.log(event);
+		    	console.log(ui);    
+		    }
+		});
+
+	}
+
 	function get_selected_character() {
 		return get_character(selected_character);
 	}
@@ -61,7 +101,7 @@
 			contentType: "application/json; charset=utf-8",
 			dataType: "html",
 			success: function() {
-				callback();
+				if(callback) callback();
 			},
 			error: function(response) {
 				if(response.status == 401) {

@@ -192,6 +192,51 @@ $theme_color_6: #6F522D;
 		height: 99%;
 		padding: 10px;
 		overflow-y: auto;
+
+		.group {
+			
+			width: 96%;
+			height: auto;
+			border-style: solid;
+			border-width: 1px;
+			margin: 2% 2% 2% 2%;
+			background-color: blue;
+
+		}
+
+		.character {
+
+			.character-image {
+				background-repeat: no-repeat;
+				background-size: cover;
+				background-position: center;
+				border-style: none;
+				height: 100px;
+				width: 100%;
+			}
+
+			.character-name {
+				border-style: none;
+				text-align: center;
+				height: 20px;
+				width: 100%;
+			}
+
+			background-color: white;
+			border-color: black;
+			border-style: solid;
+			border-width: 1px;
+			height: 120px;
+			width: 100px;
+			display: inline-block;
+			margin: 2.5% 2.5% 2.5% 2.5%;
+			cursor: move;
+
+			&:active {
+			    cursor: grabbing;
+			}
+		}
+
 	}
 
 	#event_info {
