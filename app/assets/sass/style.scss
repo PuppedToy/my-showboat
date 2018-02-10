@@ -200,11 +200,14 @@ $theme_color_6: #6F522D;
 			border-style: solid;
 			border-width: 1px;
 			margin: 2% 2% 2% 2%;
-			background-color: blue;
+			border-radius: 10px;
 
 		}
 
 		.character {
+
+			border-radius: 10px;
+			
 
 			.character-image {
 				background-repeat: no-repeat;
