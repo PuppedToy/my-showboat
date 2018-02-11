@@ -661,23 +661,22 @@ Controller.prototype.delete_event = function(request, response) {
 
 Controller.prototype.upload_image = function(request, response) {
 
-	var form = new formidable.IncomingForm();
+	if(!request.files)
+		return res.status(400).send('No files were uploaded.');
 
-	form.uploadDir = "./public/assets/custom_images";
-	form.keepExtensions = true;
+	var sampleFile = request.files.sampleFile;
 
-	form.parse(request, function (err, fields, files) {
+	console.log(sampleFile);
+	console.log(path.resolve('./public/assets/custom_images/sampleFile.png'));
 
-		console.log(files);
-
-		if(err) {
-			console.log(err);
-			responses.database_error(response);
+	sampleFile.mv(path.resolve('./public/assets/custom_images/sampleFile.png'), function(err) {
+	    if (err) {
+	  		console.log(err);
+			responses.bad_request(response, "Error when uploading image");
 			return;
-		}
+	    }
 
 		responses.ok(response);
-
 	});
 
 }

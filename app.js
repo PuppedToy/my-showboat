@@ -6,6 +6,7 @@ var port = process.env.PORT || 3000;
 
 var cors = require('cors');
 var fs = require('fs');
+var fileUpload = require('express-fileupload');
 
 var router = express.Router();
 
@@ -18,6 +19,7 @@ var bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(express.static('public'));
 app.use(cors());
+app.use(fileUpload());
 app.use(router);
 
 var server = app.listen(port, function() {
