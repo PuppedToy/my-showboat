@@ -22,6 +22,7 @@ module.exports = function (router, controller) {
 	router.post('/api/users/:userId/events/list', controller.get_eventlist);
 	router.post('/api/users/:userId/events', controller.create_event);
 	router.post('/api/users/:userId/events/:eventId', controller.get_event);
+	router.post('/api/users/:userId/events/:eventId/images', controller.upload_image);
 	router.put('/api/users/:userId/events/:eventId', controller.edit_event);
 	router.delete('/api/users/:userId/events/:eventId', controller.delete_event);
 	router.post('/api/users/:userId/events/:eventId/logs/list', controller.get_loglist);
@@ -29,9 +30,6 @@ module.exports = function (router, controller) {
 	router.post('/api/users/:userId/events/:eventId/logs/:logId', controller.get_log);
 	router.put('/api/users/:userId/events/:eventId/logs/:logId', controller.edit_log);
 	router.delete('/api/users/:userId/events/:eventId/logs/:logId', controller.delete_log);
-
-	// Images operations
-	router.post('/api/images', controller.upload_image);
 
 	// Votes operations
 	router.get('/api/votes', controller.get_votelist);

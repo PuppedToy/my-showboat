@@ -83,7 +83,36 @@
 			});
 
 			$("#upload_button").on("click", function() {
-				// TODO
+				var form = $('form')[0];
+				var formData = new FormData(form);
+
+				formData.append('character', selected_character);
+				formData.append('ticket', ticket);
+
+				$.ajax({
+				    url: "/api/users/" + user_id + "/events/" + current_event + "/images",
+				    data: formData,
+				    type: 'POST',
+				    contentType: false,
+				    processData: false,
+				    success: function(response) {
+				    	// TODO change character image URI from response & draw again
+				    	// TODO must include ticket on request
+				    	console.log(response);
+				    },
+				    error: function(response) {
+				    	if(response.status == 401) {
+							// unauthorized
+							alert("Connection lost. Please, log in again");
+						} else if (response.status == 500) {
+							alert("Internal server error. Please, contact the adminsitrator or try it later");
+						} else {
+							alert("Unknown error " + response.status);
+						}
+						disconnect();
+
+				    }
+				});
 			});
 
 			$("#rename_button").on("click", function() {
@@ -125,6 +154,7 @@
 			$(".file_selector").attr("disabled", true);
 		}
 		$("#character_name").val("");
+		$(".file_selector").val("");
 
 	}
 
@@ -141,11 +171,12 @@
 
 	function character_click(self) {
 
+		var previous_character = selected_character;
 		selected_character = parseInt($(self).attr("id").replace("character-", ""));
 
 		// AJAX al evento elegido para obtener informacion
 
-		draw_characters();
+		if(previous_character !== selected_character) draw_characters();
 
 	}
 

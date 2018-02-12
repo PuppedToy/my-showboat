@@ -47,14 +47,10 @@
 						<div class="character_picture">
 							<img id="character_picture" class="hw100">
 						</div>
-					    <form ref='uploadForm' 
-					      id='uploadForm' 
-					      action='/api/images' 
-					      method='post' 
-					      encType="multipart/form-data">
+					    <form method='post' encType="multipart/form-data">
 					        <input class="file_selector" type="file" name="sampleFile" />
-					        <input type='submit' class='btn btn-font-xs' value='Upload!' />
-					    </form> 
+					        <input id='upload_button' type='button' class='btn btn-font-xs' value='Upload!' />
+					    </form>
 						<!--<input class="file_selector" type="file" onchange="test()">
 						<div id="upload_button" class="btn btn-font-xs">Upload</div>-->
 						<div class="height20px"></div>

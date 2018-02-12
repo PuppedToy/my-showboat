@@ -271,72 +271,26 @@ Controller.prototype.check_ticket = function(request, response) {
 }
 
 Controller.prototype.get_eventlist = function(request, response) {
-	
-	var user_id = request.params.userId;
-	var ticket = ticket_factory.get_ticket(request.body.ticket);
 
-	if(!ticket) {
-		responses.unauthorized(response, "Ticket given is not valid or has expired");
-		return;
-	}
+	authenticateWithTicket(request, response, function(db, client, user_found) {
 
-	var object_id;
-	try {
-		object_id = new mongo.ObjectId(user_id);
-	} catch (err) {
-		responses.bad_request(response, "The user id is not valid");
-		return;
-	}
+		if(!user_found.events) {
+			responses.ok(response, {events: []});
+		} else {
+			var eventlist = [];
 
-	MongoClient.connect(config.mongo_url, function(err, client) {
+			user_found.events.forEach(function(event) {
+				eventlist.push({
+					name: event.name,
+					uri: tools.get_base_uri(request) + "/api/users/" + request.params.userId + "/events/" + event._id,
+					id: event._id
+				});
+			});
 
-		if(err) {
-			console.log(err);
-			responses.database_error(response);
-			return;		
+			responses.ok(response, {events: eventlist});
 		}
 
-		var db = client.db(config.mongo_name);
-
-		db.collection('users').findOne({_id: object_id}, function(err, user_found) {
-			if(err) {
-				console.log(err);
-				responses.database_error(response);
-				client.close();
-				return;		
-			}
-
-			if(!user_found) {
-				responses.not_found(response, "User given does not exist");
-				client.close();
-				return;
-			}
-
-			if(ticket.name !== user_found.name) {
-				responses.unauthorized(response, "Ticket given is not valid or has expired");
-				client.close();
-				return;
-			}
-
-			if(!user_found.events) {
-				responses.ok(response, {events: []});
-			} else {
-				var eventlist = [];
-
-				user_found.events.forEach(function(event) {
-					eventlist.push({
-						name: event.name,
-						uri: tools.get_base_uri(request) + "/api/users/" + user_id + "/events/" + event._id,
-						id: event._id
-					})
-				});
-
-				responses.ok(response, {events: eventlist});
-			}
-
-			client.close();
-
-		});
+		client.close();
 
 	});
 	
@@ -344,65 +298,27 @@ Controller.prototype.get_eventlist = function(request, response) {
 
 
 Controller.prototype.create_event = function(request, response) {
-	
-	var user_id = request.params.userId;
-	var ticket = ticket_factory.get_ticket(request.body.ticket);
 
-	if(!ticket) {
-		responses.unauthorized(response, "Ticket given is not valid or has expired");
-		return;
-	}
+	authenticateWithTicket(request, response, function(db, client, user_found) {
 
-	MongoClient.connect(config.mongo_url, function(err, client) {
+		if(!user_found.events) user_found.events = [];
+		var new_id = 1;
+		if(user_found.events.length > 0) new_id = user_found.events[user_found.events.length - 1]._id + 1;
+		var new_event = {_id: new_id, name: "My Event " + new_id};
+		user_found.events.push(new_event);
 
-		if(err) {
-			console.log(err);
-			responses.database_error(response);
-			return;		
-		}
+		db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
 
-		var db = client.db(config.mongo_name);
-
-		db.collection('users').findOne({_id: new mongo.ObjectId(user_id)}, function(err, user_found) {
 			if(err) {
 				console.log(err);
 				responses.database_error(response);
 				client.close();
 				return;		
-			}
-
-			if(!user_found) {
-				responses.not_found(response, "User given does not exist");
+			} else {
+				responses.created(response, {id: new_event._id, name: new_event.name});
 				client.close();
 				return;
 			}
-
-			if(ticket.name !== user_found.name) {
-				responses.unauthorized(response, "Ticket given is not valid or has expired");
-				client.close();
-				return;
-			}
-
-			if(!user_found.events) user_found.events = [];
-			var new_id = 1;
-			if(user_found.events.length > 0) new_id = user_found.events[user_found.events.length - 1]._id + 1;
-			var new_event = {_id: new_id, name: "My Event " + new_id};
-			user_found.events.push(new_event);
-
-			db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
-
-				if(err) {
-					console.log(err);
-					responses.database_error(response);
-					client.close();
-					return;		
-				} else {
-					responses.created(response, {id: new_event._id, name: new_event.name});
-					client.close();
-					return;
-				}
-
-			});
 
 		});
 
@@ -412,171 +328,76 @@ Controller.prototype.create_event = function(request, response) {
 
 
 Controller.prototype.get_event = function(request, response) {
-	
-	var user_id = request.params.userId;
-	var event_id = request.params.eventId;
-	var ticket = ticket_factory.get_ticket(request.body.ticket);
 
-	if(!ticket) {
-		responses.unauthorized(response, "Ticket given is not valid or has expired");
-		return;
-	}
+	authenticateWithTicket(request, response, function(db, client, user_found) {
 
-	var object_id;
-	try {
-		object_id = new mongo.ObjectId(user_id);
-	} catch (err) {
-		responses.bad_request(response, "The user id is not valid");
-		return;
-	}
+		var event_found = null;
 
-	MongoClient.connect(config.mongo_url, function(err, client) {
+		for(var i = 0; !event_found && i < user_found.events.length; i++) {
+			if(user_found.events[i]._id == request.params.eventId) {
+				event_found = user_found.events[i];
+			}
+		} 
 
-		if(err) {
-			console.log(err);
-			responses.database_error(response);
-			return;		
+		if(event_found) {
+			responses.ok(response, event_found);
+		} else {
+			responses.not_found(response, "Event requested has not been found");
 		}
 
-		var db = client.db(config.mongo_name);
+		client.close();
 
-		db.collection('users').findOne({_id: object_id}, function(err, user_found) {
-			if(err) {
-				console.log(err);
-				responses.database_error(response);
-				client.close();
-				return;		
-			}
-
-			if(!user_found) {
-				responses.not_found(response, "User given does not exist");
-				client.close();
-				return;
-			}
-
-			if(ticket.name !== user_found.name) {
-				responses.unauthorized(response, "Ticket given is not valid or has expired");
-				client.close();
-				return;
-			}
-
-			if(!user_found.events) user_found.events = [];
-
-			var event_found = null;
-
-			for(var i = 0; !event_found && i < user_found.events.length; i++) {
-				if(user_found.events[i]._id == event_id) {
-					event_found = user_found.events[i];
-				}
-			} 
-
-			if(event_found) {
-				responses.ok(response, event_found);
-			} else {
-				responses.not_found(response, "Event requested has not been found");
-			}
-
-			client.close();
-
-		});
-
-	});	
+	});
 	
 }
 
 
 Controller.prototype.edit_event = function(request, response) {
-	
-	var user_id = request.params.userId;
-	var event_id = request.params.eventId;
-	var ticket = ticket_factory.get_ticket(request.body.ticket);
 
-	if(!ticket) {
-		responses.unauthorized(response, "Ticket given is not valid or has expired");
-		return;
-	}
+	authenticateWithTicket(request, response, function(db, client, user_found) {
 
-	var object_id;
-	try {
-		object_id = new mongo.ObjectId(user_id);
-	} catch (err) {
-		responses.bad_request(response, "The user id is not valid");
-		return;
-	}
+		if(!user_found.events) user_found.events = [];
 
-	MongoClient.connect(config.mongo_url, function(err, client) {
+		var event_found = null;
 
-		if(err) {
-			console.log(err);
-			responses.database_error(response);
-			return;		
+		for(var i = 0; !event_found && i < user_found.events.length; i++) {
+			if(user_found.events[i]._id == request.params.eventId) {
+				event_found = user_found.events[i];
+			}
 		}
 
-		var db = client.db(config.mongo_name);
-
-		db.collection('users').findOne({_id: object_id}, function(err, user_found) {
-			if(err) {
-				console.log(err);
-				responses.database_error(response);
-				client.close();
-				return;		
+		if(request.body.update) {
+			for(var key in request.body.update) {
+				event_found[key] = request.body.update[key];
 			}
+		}
 
-			if(!user_found) {
-				responses.not_found(response, "User given does not exist");
-				client.close();
-				return;
-			}
-
-			if(ticket.name !== user_found.name) {
-				responses.unauthorized(response, "Ticket given is not valid or has expired");
-				client.close();
-				return;
-			}
-
-			if(!user_found.events) user_found.events = [];
-
-			var event_found = null;
-
-			for(var i = 0; !event_found && i < user_found.events.length; i++) {
-				console.log(user_found.events[i]._id + " == " + event_id);
-				if(user_found.events[i]._id == event_id) {
-					event_found = user_found.events[i];
+		if(event_found) {
+			db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
+				if(err) {
+					console.log(err);
+					responses.database_error(response);
+					client.close();
+					return;		
 				}
-			}
 
-			if(request.body.update) {
-				for(var key in request.body.update) {
-					event_found[key] = request.body.update[key];
-				}
-			}
+				responses.ok(response);
+			});
+		} else {
+			responses.not_found(response, "Event requested has not been found");
+		}
 
-			if(event_found) {     db.collection('users').updateOne({_id:
-				user_found._id}, {$set: user_found}, function(err) {
-					if(err) {
-						console.log(err);
-						responses.database_error(response);
-						client.close();
-						return;		
-					}
+		client.close();
 
-					responses.ok(response);
-				});
-			} else {
-				responses.not_found(response, "Event requested has not been found");
-			}
-
-			client.close();
-
-		});
-
-	});	
+	});
 	
 }
 
 
 Controller.prototype.delete_event = function(request, response) {
 	
+	// TODO use authenticateWithTicket
+
 	var user_id = request.params.userId;
 	var event_id = request.params.eventId;
 	var ticket = ticket_factory.get_ticket(request.body.ticket);
@@ -666,8 +487,10 @@ Controller.prototype.upload_image = function(request, response) {
 
 	var sampleFile = request.files.sampleFile;
 
+	console.log(request.body);
+	// TODO authenticate & edit characters & ensure not garbage images
+
 	console.log(sampleFile);
-	console.log(path.resolve('./public/assets/custom_images/sampleFile.png'));
 
 	sampleFile.mv(path.resolve('./public/assets/custom_images/sampleFile.png'), function(err) {
 	    if (err) {
@@ -762,3 +585,73 @@ Controller.prototype.delete_vote = function(request, response) {
 }
 
 module.exports = Controller;
+
+
+
+
+function authenticateWithTicket(request, response, success_cb, error_cb) {
+
+	var user_id = request.params.userId;
+	var event_id = request.params.eventId;
+	var ticket = ticket_factory.get_ticket(request.body.ticket);
+
+	if(!ticket) {
+		responses.unauthorized(response, "Ticket given is not valid or has expired");
+		return;
+	}
+
+	var object_id;
+	try {
+		object_id = new mongo.ObjectId(user_id);
+	} catch (err) {
+		responses.bad_request(response, "The user id is not valid");
+		return;
+	}
+
+	MongoClient.connect(config.mongo_url, function(err, client) {
+
+		if(err) {
+			console.log(err);
+			responses.database_error(response);
+			if(error_cb) error_cb();
+			return;		
+		}		
+
+		var db = client.db(config.mongo_name);
+
+		db.collection('users').findOne({_id: object_id}, function(err, user_found) {
+			if(err) {
+				console.log(err);
+				responses.database_error(response);
+				client.close();
+				if(error_cb) error_cb();
+				return;		
+			}
+
+			if(!user_found) {
+				responses.not_found(response, "User given does not exist");
+				client.close();
+				if(error_cb) error_cb();
+				return;
+			}
+
+			if(ticket.name !== user_found.name) {
+				responses.unauthorized(response, "Ticket given is not valid or has expired");
+				client.close();
+				if(error_cb) error_cb();
+				return;
+			}
+
+			if(success_cb) success_cb(db, client, user_found);
+			else {
+				console.log("Successful authentication. Did you forget to add a callback?")
+				responses.ok(response);
+				client.close();
+			}
+
+		});
+
+	});
+
+}
+
