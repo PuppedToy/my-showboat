@@ -10,6 +10,9 @@ var md5 = require('md5');
 var TicketFactory = require('../lib/ticket-factory');
 var ticket_factory = new TicketFactory();
 var formidable = require('formidable');
+var isImage = require('is-image');
+
+// TODO Clean up this code please. It's messy as hell
 
 function Controller(url) {
 
@@ -395,115 +398,137 @@ Controller.prototype.edit_event = function(request, response) {
 
 
 Controller.prototype.delete_event = function(request, response) {
+
+	// TODO remove images of all characters involved. 
+	// How can I the image of a deleted character if the call is edit? Must think about it
 	
-	// TODO use authenticateWithTicket
+	authenticateWithTicket(request, response, function(db, client, user_found) {
 
-	var user_id = request.params.userId;
-	var event_id = request.params.eventId;
-	var ticket = ticket_factory.get_ticket(request.body.ticket);
+		if(!user_found.events) user_found.events = [];
 
-	if(!ticket) {
-		responses.unauthorized(response, "Ticket given is not valid or has expired");
-		return;
-	}
+		var deleted = false;
 
-	var object_id;
-	try {
-		object_id = new mongo.ObjectId(user_id);
-	} catch (err) {
-		responses.bad_request(response, "The user id is not valid");
-		return;
-	}
-
-	MongoClient.connect(config.mongo_url, function(err, client) {
-
-		if(err) {
-			console.log(err);
-			responses.database_error(response);
-			return;		
-		}
-
-		var db = client.db(config.mongo_name);
-
-		db.collection('users').findOne({_id: object_id}, function(err, user_found) {
-			if(err) {
-				console.log(err);
-				responses.database_error(response);
-				client.close();
-				return;		
+		for(var i = 0; !deleted && i < user_found.events.length; i++) {
+			if(user_found.events[i]._id == request.params.eventId) {
+				deleted = true;
+				user_found.events.splice(i, 1);
 			}
+		} 
 
-			if(!user_found) {
-				responses.not_found(response, "User given does not exist");
-				client.close();
-				return;
-			}
+		if(deleted) {
+			db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
 
-			if(ticket.name !== user_found.name) {
-				responses.unauthorized(response, "Ticket given is not valid or has expired");
-				client.close();
-				return;
-			}
-
-			if(!user_found.events) user_found.events = [];
-
-			var deleted = false;
-
-			for(var i = 0; !deleted && i < user_found.events.length; i++) {
-				if(user_found.events[i]._id == event_id) {
-					deleted = true;
-					user_found.events.splice(i, 1);
+				if(err) {
+					console.log(err);
+					responses.database_error(response);
+					client.close();
+					return;
+				} else {
+					responses.ok(response);
+					client.close();
+					return;
 				}
-			} 
 
-			if(deleted) {
-				db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
+			});
+		} else {
+			responses.not_found(response, "Event requested has not been found");
+			client.close();
+		}		
 
-					if(err) {
-						console.log(err);
-						responses.database_error(response);
-						client.close();
-						return;		
-					} else {
-						responses.ok(response);
-						client.close();
-						return;
-					}
-
-				});
-			} else {
-				responses.not_found(response, "Event requested has not been found");
-			}		
-
-		});
-
-	});	
-}
-
-Controller.prototype.upload_image = function(request, response) {
-
-	if(!request.files)
-		return res.status(400).send('No files were uploaded.');
-
-	var sampleFile = request.files.sampleFile;
-
-	console.log(request.body);
-	// TODO authenticate & edit characters & ensure not garbage images
-
-	console.log(sampleFile);
-
-	sampleFile.mv(path.resolve('./public/assets/custom_images/sampleFile.png'), function(err) {
-	    if (err) {
-	  		console.log(err);
-			responses.bad_request(response, "Error when uploading image");
-			return;
-	    }
-
-		responses.ok(response);
 	});
 
 }
 
+Controller.prototype.upload_image = function(request, response) {
+
+	authenticateWithTicket(request, response, function(db, client, user_found) {
+
+		if(!user_found.events) user_found.events = [];
+
+		var event_found = null;
+		var character_found = null;
+
+		for(var i = 0; !event_found && i < user_found.events.length; i++) {
+			if(user_found.events[i]._id == request.params.eventId) {
+				event_found = user_found.events[i];
+			}
+		}
+
+		if(!request.files || !request.files.uploadedFile) {
+			responses.bad_request(response, 'No files were uploaded.');
+			client.close();
+			return;
+		}
+
+		var uploadedFile = request.files.uploadedFile;
+
+		if(!isImage(uploadedFile.name)) { // Dunno if this works
+			responses.bad_request(response, 'The file uploaded is not an image.');
+			client.close();
+			return;
+		}
+
+		if(!event_found) {
+			responses.not_found(response, "Event requested has not been found");
+			client.close();
+			return;
+		}
+
+		for(var i = 0; !character_found && i < event_found.characters.length; i++) {
+			if(event_found.characters[i]._id == request.body.character) {
+				character_found = event_found.characters[i];
+			}
+		}
+
+		if(!character_found) {
+			responses.not_found(response, "The character requested does not exist");
+			client.close();
+			return;
+		}
+
+		var image_name = request.params.userId + "-" + request.params.eventId + "-" + character_found._id + ".png"; // Custom extension. Check valid images
+		var image_path = path.join(path.resolve('./public/assets/custom_images/'), image_name);
+		console.log(image_path);
+		var image_uri = '/assets/custom_images/' + image_name;
+
+		if(character_found.img && character_found.img.indexOf('/assets/custom_images') === 0) {
+			try {
+				fs.unlinkSync(character_found.img.replace('/assets/custom_images', path.resolve('./public/assets/custom_images')));
+			} catch (err) {
+				console.log(err);
+				responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
+				client.close();
+				return;
+			}
+		}
+
+		character_found.img = "/assets/images/man-1.png";
+
+		uploadedFile.mv(image_path, function(err) {
+		    if (err) {
+		  		console.log(err);
+				responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
+				client.close();
+				return;
+		    }
+
+		    character_found.img = image_uri;
+
+		    db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
+				if(err) {
+					console.log(err);
+					responses.database_error(response);
+					client.close();
+					return;		
+				}
+
+				responses.ok(response, event_found);
+				client.close();
+			});
+		});
+	});
+
+}
 
 Controller.prototype.get_loglist = function(request, response) {
 	

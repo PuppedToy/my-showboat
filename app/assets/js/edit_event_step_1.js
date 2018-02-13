@@ -83,6 +83,13 @@
 			});
 
 			$("#upload_button").on("click", function() {
+
+				if(!$(".file_selector").val()) {
+					return;
+				}
+
+				$("#character_picture").attr("src", "/assets/images/loading.gif");
+
 				var form = $('form')[0];
 				var formData = new FormData(form);
 
@@ -96,9 +103,9 @@
 				    contentType: false,
 				    processData: false,
 				    success: function(response) {
-				    	// TODO change character image URI from response & draw again
-				    	// TODO must include ticket on request
 				    	console.log(response);
+				    	characters = response.characters || [];
+						draw_characters();
 				    },
 				    error: function(response) {
 				    	if(response.status == 401) {
@@ -106,11 +113,12 @@
 							alert("Connection lost. Please, log in again");
 						} else if (response.status == 500) {
 							alert("Internal server error. Please, contact the adminsitrator or try it later");
+						} else if (response.status == 400) {
+							alert("Bad request from the browser. Please, contact the admin.");
 						} else {
 							alert("Unknown error " + response.status);
 						}
 						disconnect();
-
 				    }
 				});
 			});
