@@ -334,13 +334,7 @@ Controller.prototype.get_event = function(request, response) {
 
 	authenticateWithTicket(request, response, function(db, client, user_found) {
 
-		var event_found = null;
-
-		for(var i = 0; !event_found && i < user_found.events.length; i++) {
-			if(user_found.events[i]._id == request.params.eventId) {
-				event_found = user_found.events[i];
-			}
-		} 
+		var event_found = searchEvent(user_found, request.params.eventId);
 
 		if(event_found) {
 			responses.ok(response, event_found);
@@ -359,15 +353,7 @@ Controller.prototype.edit_event = function(request, response) {
 
 	authenticateWithTicket(request, response, function(db, client, user_found) {
 
-		if(!user_found.events) user_found.events = [];
-
-		var event_found = null;
-
-		for(var i = 0; !event_found && i < user_found.events.length; i++) {
-			if(user_found.events[i]._id == request.params.eventId) {
-				event_found = user_found.events[i];
-			}
-		}
+		var event_found = searchEvent(user_found, request.params.eventId);
 
 		if(request.body.update) {
 			for(var key in request.body.update) {
@@ -413,7 +399,7 @@ Controller.prototype.delete_event = function(request, response) {
 				deleted = true;
 				user_found.events.splice(i, 1);
 			}
-		} 
+		}
 
 		if(deleted) {
 			db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
@@ -439,19 +425,72 @@ Controller.prototype.delete_event = function(request, response) {
 
 }
 
+Controller.prototype.upload_link_image = function(request, response) {
+
+	authenticateWithTicket(request, response, function(db, client, user_found) {
+
+		var event_found = searchEvent(user_found, request.params.eventId);
+
+		if(!event_found) {
+			responses.not_found(response, "Event requested has not been found");
+			client.close();
+			return;
+		}
+
+		var character_found = searchCharacter(event_found, request.body.character);
+
+		if(!character_found) {
+			responses.not_found(response, "The character requested does not exist");
+			client.close();
+			return;
+		}
+
+		var new_link = request.body.new_link;
+
+		if(!new_link) {
+			responses.bad_request(response, "Missing \"new_link\"");
+			client.close();
+			return;
+		}
+
+		if(!deleteImage(character_found, response, client)) return;
+
+		character_found.img = new_link;
+
+		db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
+			if(err) {
+				console.log(err);
+				responses.database_error(response);
+				client.close();
+				return;		
+			}
+
+			responses.ok(response, event_found);
+			client.close();
+		});
+
+	});
+
+}
+
 Controller.prototype.upload_image = function(request, response) {
 
 	authenticateWithTicket(request, response, function(db, client, user_found) {
 
-		if(!user_found.events) user_found.events = [];
+		var event_found = searchEvent(user_found, request.params.eventId);
 
-		var event_found = null;
-		var character_found = null;
+		if(!event_found) {
+			responses.not_found(response, "Event requested has not been found");
+			client.close();
+			return;
+		}
 
-		for(var i = 0; !event_found && i < user_found.events.length; i++) {
-			if(user_found.events[i]._id == request.params.eventId) {
-				event_found = user_found.events[i];
-			}
+		var character_found = searchCharacter(event_found, request.body.character);
+
+		if(!character_found) {
+			responses.not_found(response, "The character requested does not exist");
+			client.close();
+			return;
 		}
 
 		if(!request.files || !request.files.uploadedFile) {
@@ -468,41 +507,12 @@ Controller.prototype.upload_image = function(request, response) {
 			return;
 		}
 
-		if(!event_found) {
-			responses.not_found(response, "Event requested has not been found");
-			client.close();
-			return;
-		}
-
-		for(var i = 0; !character_found && i < event_found.characters.length; i++) {
-			if(event_found.characters[i]._id == request.body.character) {
-				character_found = event_found.characters[i];
-			}
-		}
-
-		if(!character_found) {
-			responses.not_found(response, "The character requested does not exist");
-			client.close();
-			return;
-		}
-
-		var image_name = request.params.userId + "-" + request.params.eventId + "-" + character_found._id + ".png"; // Custom extension. Check valid images
+		var image_name = request.params.userId + "-" + request.params.eventId + "-" + character_found._id + "-" + parseInt(Math.random()*35000) + ".png";
 		var image_path = path.join(path.resolve('./public/assets/custom_images/'), image_name);
 		console.log(image_path);
 		var image_uri = '/assets/custom_images/' + image_name;
 
-		if(character_found.img && character_found.img.indexOf('/assets/custom_images') === 0) {
-			try {
-				fs.unlinkSync(character_found.img.replace('/assets/custom_images', path.resolve('./public/assets/custom_images')));
-			} catch (err) {
-				console.log(err);
-				responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
-				client.close();
-				return;
-			}
-		}
-
-		character_found.img = "/assets/images/man-1.png";
+		if(!deleteImage(character_found, response, client)) return;
 
 		uploadedFile.mv(image_path, function(err) {
 		    if (err) {
@@ -611,8 +621,50 @@ Controller.prototype.delete_vote = function(request, response) {
 
 module.exports = Controller;
 
+function deleteImage(character, response, client) {
+	if(character.img && character.img.indexOf('/assets/custom_images') === 0) {
+		try {
+			fs.unlinkSync(character.img.replace('/assets/custom_images', path.resolve('./public/assets/custom_images')));
+			character.img = "/assets/images/man-1.png";			
+			return true;
+		} catch (err) {
+			console.log(err);
+			responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
+			client.close();
+			character.img = "/assets/images/man-1.png";			
+			return false;
+		}
+	} return true;
+}
 
+function searchCharacter(event, character_id) {
 
+	character_found = null;
+
+	for(var i = 0; !character_found && i < event.characters.length; i++) {
+		if(event.characters[i]._id == character_id) {
+			character_found = event.characters[i];
+		}
+	}
+
+	return character_found;
+
+}
+
+function searchEvent(user, event_id) {
+
+	if(!user.events) user.events = [];
+	event_found = null;
+
+	for(var i = 0; !event_found && i < user.events.length; i++) {
+		if(user.events[i]._id == event_id) {
+			event_found = user.events[i];
+		}
+	}
+
+	return event_found;
+
+}
 
 function authenticateWithTicket(request, response, success_cb, error_cb) {
 

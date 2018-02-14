@@ -48,15 +48,16 @@
 							<img id="character_picture" class="hw100">
 						</div>
 					    <form method='post' encType="multipart/form-data">
-					        <input class="file_selector" type="file" name="uploadedFile" accept="image/x-png,image/gif,image/jpeg" />
-					        <input id='upload_button' type='button' class='btn btn-font-xs' value='Upload!' />
+					        <input class="file_selector" type="file" id="uploadedFile" name="uploadedFile" accept="image/x-png,image/gif,image/jpeg" />
+					        <label for='uploadedFile' class='btn btn-font-xs disablable' id='uploadedFileLabel'>Upload</label> <label class='btn btn-font-xs disablable' data-toggle="modal" data-target="#modalExtlink">Use external link</label>
+					        <!--<input id='upload_button' type='button' class='btn btn-font-xs' value='Upload!' />-->
 					    </form>
 						<!--<input class="file_selector" type="file" onchange="test()">
 						<div id="upload_button" class="btn btn-font-xs">Upload</div>-->
 						<div class="height20px"></div>
 						New Name: <input id="character_name" accept='image/*' type="text">
 						<div class="height20px"></div>
-						<div id="rename_button" class="btn btn-font-xs">Change name</div>
+						<div id="rename_button" class="btn btn-font-xs disablable">Change name</div>
 					</div>
 				</div>
 			</div>
@@ -65,5 +66,27 @@
 			</div>
 		</div>
 	</div>
+
+	<!-- Modal -->
+	<div class="modal fade" id="modalExtlink" role="dialog">
+		<div class="modal-dialog">
+
+			<!-- Modal content-->
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title text-center">Copy the external image link below</h4>
+				</div>
+				<div class="modal-body">
+					<p style='height: 40px;'><input style="width: 70%; float: left; margin-top: 4px;" type="text" id='extLinkInput' placeholder='Image Link Here'><button style="float: right;" class='btn btn-default' id='extLinkButton' data-dismiss="modal">Use this image</button></p>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+
+		</div>
+	</div>
+
 </body>
 </html>

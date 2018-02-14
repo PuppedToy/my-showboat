@@ -17,6 +17,11 @@ $theme_color_3: #fff;
 $theme_color_4: #CEA18C;
 $theme_color_5: #6F5839;
 $theme_color_6: #6F522D;
+// Unabled
+	// Light grey
+	$unabled_color_1: #F2F2F2;
+	// Grey
+	$unabled_color_2: #BDBDBD; 
 
 .main {
 	padding-top: 2.3%;
@@ -49,12 +54,19 @@ $theme_color_6: #6F522D;
 
 	.btn {
 		font-size: 5vw;
-		border-radius: 20%;
+		border-radius: 10px;
 		border-style: outset;
 		background-color: $theme_color_2;
 		border-color: $theme_color_1;
 		border-style: outset;
 		border-width: 5px;
+	}
+
+	.btn-disabled {
+		border-color: $unabled_color_2;
+		background-color: $unabled_color_1;
+		cursor: default;
+		color: $unabled_color_2;
 	}
 
 	.btn-font-sm {
@@ -142,6 +154,12 @@ $theme_color_6: #6F522D;
 		overflow-y: auto;
 	}
 
+	#event_info {
+		background-position: center;
+		background-repeat: no-repeat;
+		background-size: 30%;
+	}
+
 	.list-element {
 		border-style: dotted;
 		border-color: black;
@@ -179,10 +197,12 @@ $theme_color_6: #6F522D;
 	}
 
 	.file_selector {
-		margin: auto;
-		margin-top: 20px;
-		margin-bottom: 20px;
-		font-size: 18px;
+		height: 0.1px;
+		width: 0.1px;
+		opacity: 0;
+		overflow: hidden;
+		position: absolute;
+		z-index: -1;
 	}
 
 	.images-container {

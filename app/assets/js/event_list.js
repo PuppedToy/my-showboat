@@ -13,6 +13,7 @@
 			$("#event_list").on("click", function(e) {
 				if(e.target === e.currentTarget) {
 					selected_event = undefined;
+					$("#event_info").html("No event selected");
 					drawEvents();
 				}
 			});
@@ -125,11 +126,69 @@
 	function eventClick(self) {
 
 		selected_event = parseInt($(self).attr("id").replace("event-", ""));
+		$("#event_info").css("background-image", "url(/assets/images/loading.gif)");
 
 		// AJAX al evento elegido para obtener informacion
+		if(selected_event != undefined) {
+			$.ajax({
+				type: "POST",
+				url: "/api/users/" + user_id + "/events/" + selected_event,
+				data: JSON.stringify({ ticket: ticket }),
+				contentType: "application/json; charset=utf-8",
+				dataType: "json",
+				success: function(response){
+
+					var html = "<p><strong>Name: </strong>" + response.name + "</p>";
+					html += "<p><strong>Characters: </strong>" + response.characters.map(function(char) {
+						return char.name
+					}).join(", ") + "</p>";
+
+					$("#event_info").css("background-image", "none");
+					$("#event_info").html(html);
+
+				},
+				error: function(response) {
+					if(response.status == 401) {
+						// unauthorized
+						alert("Connection lost. Please, log in again");
+						disconnect();
+					} else if(response.status == 500) {
+						alert("Internal server error. Please, contact the adminsitrator or try it later");
+						disconnect();
+					}
+				}
+			});
+		}
 
 		drawEvents();
 
+	}
+
+	function setupInputFiles() {
+		$( '.inputfile' ).each( function()
+		{
+			var $input	 = $( this ),
+				$label	 = $input.next( 'label' ),
+				labelVal = $label.html();
+
+			$input.on( 'change', function( e )
+			{
+				var fileName = '';
+
+				if( this.files && e.target.value )
+					fileName = e.target.value.split( '\\' ).pop();
+
+				if( fileName )
+					$label.find( 'span' ).html( fileName );
+				else
+					$label.html( labelVal );
+			});
+
+			// Firefox bug fix
+			$input
+			.on( 'focus', function(){ $input.addClass( 'has-focus' ); })
+			.on( 'blur', function(){ $input.removeClass( 'has-focus' ); });
+		});
 	}
 
 })(jQuery);

@@ -82,7 +82,7 @@
 				}
 			});
 
-			$("#upload_button").on("click", function() {
+			$("#uploadedFile").on("change", function() {
 
 				if(!$(".file_selector").val()) {
 					return;
@@ -102,6 +102,41 @@
 				    type: 'POST',
 				    contentType: false,
 				    processData: false,
+				    success: function(response) {
+				    	console.log(response);
+				    	characters = response.characters || [];
+						draw_characters();
+				    },
+				    error: function(response) {
+				    	if(response.status == 401) {
+							// unauthorized
+							alert("Connection lost. Please, log in again");
+						} else if (response.status == 500) {
+							alert("Internal server error. Please, contact the adminsitrator or try it later");
+						} else if (response.status == 400) {
+							alert("Bad request from the browser. Please, contact the admin.");
+						} else {
+							alert("Unknown error " + response.status);
+						}
+						disconnect();
+				    }
+				});
+			});
+
+			$("#extLinkButton").on("click", function() {
+				
+				$("#character_picture").attr("src", "/assets/images/loading.gif");
+
+				$.ajax({
+				    url: "/api/users/" + user_id + "/events/" + current_event + "/link_images",
+				    data: JSON.stringify({ 
+				    	ticket: ticket, 
+				    	new_link: $("#extLinkInput").val(),
+				    	character: selected_character
+    	  			}),
+				    type: 'POST',
+					contentType: "application/json; charset=utf-8",
+					dataType: "json",
 				    success: function(response) {
 				    	console.log(response);
 				    	characters = response.characters || [];
@@ -157,9 +192,11 @@
 			$("#character_picture").attr("src", my_character.img);
 			$("#character_picture").show();
 			$(".file_selector").attr("disabled", false);
+			$(".disablable").removeClass('btn-disabled');
 		} else {
 			$("#character_picture").hide();
 			$(".file_selector").attr("disabled", true);
+			$(".disablable").addClass('btn-disabled');
 		}
 		$("#character_name").val("");
 		$(".file_selector").val("");
