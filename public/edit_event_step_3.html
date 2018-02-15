@@ -8,10 +8,11 @@
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 	<link rel="stylesheet" href="assets/css/main.min.css">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script> 
 	<script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
 	<script type="text/javascript" src="assets/js/functions.js"></script>
-	<script type="text/javascript" src="assets/js/edit_event_step_1.js"></script>
+	<script type="text/javascript" src="assets/js/edit_event_step_3.js"></script>
 </head>
 <body>
 	<header class="text-center">
@@ -30,14 +31,10 @@
 				<img class="width100 btn" src="./assets/images/prev.png">
 			</div>
 			<div class="col-10 col-xs-10 main_edit height100">
-				<h1 class="text-center">Step 1: Basic Settings</h1>
-				<div class="row width100 main-height" id="event_settings">
-					<p style="width: 100%; height: 10px;"></p>
-					<div class="alert alert-danger error">Error</div>
-					<div class="alert alert-success success">Success</div>
-					<p>Event name: <input style="width: 300px;" type="text" id="event_name"></p>
-					<p style="width: 100%; height: 20px;"></p>
-					<p class="text-center"><button class='btn btn-font-sm settings-save-btn' >Save</button></p>
+				<h1 class="text-center">Step 3: Create the groups</h1>
+				<div class="width100 main-height" id="images-supercontainer">
+					<div class="images-container">
+					</div>
 				</div>
 			</div>
 			<div id="next_arrow" class="col-1 col-xs-1 height100 aligner">
@@ -45,27 +42,5 @@
 			</div>
 		</div>
 	</div>
-
-	<!-- Modal -->
-	<div class="modal fade" id="modalExtlink" role="dialog">
-		<div class="modal-dialog">
-
-			<!-- Modal content-->
-			<div class="modal-content">
-				<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal">&times;</button>
-					<h4 class="modal-title text-center">Copy the external image link below</h4>
-				</div>
-				<div class="modal-body">
-					<p style='height: 40px;'><input style="width: 70%; float: left; margin-top: 4px;" type="text" id='extLinkInput' placeholder='Image Link Here'><button style="float: right;" class='btn btn-default btn-modal' id='extLinkButton' data-dismiss="modal">Use this image</button></p>
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				</div>
-			</div>
-
-		</div>
-	</div>
-
 </body>
 </html>

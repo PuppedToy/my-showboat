@@ -132,7 +132,7 @@ $theme_color_6: #6F522D;
 		display: none;
 	}
 
-	.error {
+	.error, .success {
 		margin-top: 10px;
 		display: none;
 	}
@@ -156,12 +156,6 @@ $theme_color_6: #6F522D;
 		background-repeat: no-repeat;
 		background-size: 30%;
 		background-image: url(../images/loading.gif);
-	}
-
-	#event_info {
-		background-position: center;
-		background-repeat: no-repeat;
-		background-size: 30%;
 	}
 
 	.list-element {
@@ -267,7 +261,11 @@ $theme_color_6: #6F522D;
 
 	}
 
-	#event_info {
+	.settings-save-btn {
+		width: 100% !important;
+	}
+
+	#event_info, #event_settings {
 		padding: 2%;
 		font-size: 18px;
 		height: 76%;
@@ -275,6 +273,14 @@ $theme_color_6: #6F522D;
 		border-width: 2px;
 		border-color: $theme_color_1;
 		margin: 2%;
+		background-position: center;
+		background-repeat: no-repeat;
+		background-size: 30%;
+	}
+
+	#event_settings {
+		margin-top: 4%;
+		height: auto;
 	}
 
 }

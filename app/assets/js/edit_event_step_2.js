@@ -1,9 +1,7 @@
 (function($) {
 
 	var ticket, current_event, user_id, characters, selected_character;
-	var mouse_up = false;
-
-	var groups = [];
+	var profiles = ["man-1.png", "woman-1.png"];
 
 	$(document).ready(function() {
 		checkConnection(function(response) {
@@ -22,15 +20,14 @@
 				dataType: "json",
 				success: function(response){
 					characters = response.characters || [];
-					characters.forEach(function(character) {
-						if(!("group" in character)) {
-							character.group = -1;
-						}
-					});
-					console.log(characters);
-					// Save can finish at any time. We can draw now
-					save_characters();
-					draw_characters();
+
+					if(characters.length == 0) {
+						add_random_character();
+					} else {
+						draw_characters();
+					}
+
+					$(".list").css("background-image", "none");
 				},
 				error: function(response) {
 					if(response.status == 401) {
@@ -41,6 +38,14 @@
 						alert("Internal server error. Please, contact the adminsitrator or try it later");
 						disconnect();
 					}
+					$(".list").css("background-image", "none");
+				}
+			});
+
+			$("#character_list").on("click", function(e) {
+				if(e.target === e.currentTarget) {
+					selected_character = undefined;
+					draw_characters();
 				}
 			});
 
@@ -48,141 +53,166 @@
 				window.location.href = "/edit_event";
 			});
 
+			$("#next_arrow").on("click", function() {
+				window.location.href = "/edit_event?step=3";
+			});
+
+			$("#add_button").on("click", function() {
+				add_random_character();
+			});
+
+			$("#remove_button").on("click", function() {
+				if(selected_character === undefined) alert("There is no character selected");
+
+				var confirmation = confirm("Are you sure you want to delete character \"" + get_selected_character().name + "\"?");
+
+				if(!confirmation) return;
+
+				for(var i = 0; i < characters.length; i++) {
+					if(characters[i]._id === selected_character) {
+						characters.splice(i, 1);
+						save_characters(function() {
+							var deleted_character = selected_character;
+							for(var i = 0; i < characters.length; i++) {
+								if(characters[i]._id < deleted_character) selected_character = characters[i]._id;
+							}
+							draw_characters();
+						});
+						break;
+					}
+				}
+			});
+
+			$("#modalExtLinkButton").on("click", function() {
+
+				if(selected_character === undefined) return;
+
+				$("#extLinkInput").val("");
+
+			});
+
+			$("#uploadedFile").on("change", function() {
+
+				if(!$(".file_selector").val()) {
+					return;
+				}
+
+				$("#character_picture").attr("src", "/assets/images/loading.gif");
+
+				var form = $('form')[0];
+				var formData = new FormData(form);
+
+				formData.append('character', selected_character);
+				formData.append('ticket', ticket);
+
+				$.ajax({
+				    url: "/api/users/" + user_id + "/events/" + current_event + "/images",
+				    data: formData,
+				    type: 'POST',
+				    contentType: false,
+				    processData: false,
+				    success: function(response) {
+				    	console.log(response);
+				    	characters = response.characters || [];
+						draw_characters();
+				    },
+				    error: function(response) {
+				    	if(response.status == 401) {
+							// unauthorized
+							alert("Connection lost. Please, log in again");
+						} else if (response.status == 500) {
+							alert("Internal server error. Please, contact the adminsitrator or try it later");
+						} else if (response.status == 400) {
+							alert("Bad request from the browser. Please, contact the admin.");
+						} else {
+							alert("Unknown error " + response.status);
+						}
+						disconnect();
+				    }
+				});
+			});
+
+			$("#extLinkButton").on("click", function() {
+				
+				$("#character_picture").attr("src", "/assets/images/loading.gif");
+
+				$.ajax({
+				    url: "/api/users/" + user_id + "/events/" + current_event + "/link_images",
+				    data: JSON.stringify({ 
+				    	ticket: ticket, 
+				    	new_link: $("#extLinkInput").val(),
+				    	character: selected_character
+    	  			}),
+				    type: 'POST',
+					contentType: "application/json; charset=utf-8",
+					dataType: "json",
+				    success: function(response) {
+				    	console.log(response);
+				    	characters = response.characters || [];
+						draw_characters();
+				    },
+				    error: function(response) {
+				    	if(response.status == 401) {
+							// unauthorized
+							alert("Connection lost. Please, log in again");
+						} else if (response.status == 500) {
+							alert("Internal server error. Please, contact the adminsitrator or try it later");
+						} else if (response.status == 400) {
+							alert("Bad request from the browser. Please, contact the admin.");
+						} else {
+							alert("Unknown error " + response.status);
+						}
+						disconnect();
+				    }
+				});
+			});
+
+			$("#rename_button").on("click", function() {
+				rename_character();
+			});
+
+			$("#character_name").on("keypress", function(e) {
+				if(e.which === 13) {
+					rename_character();
+				}
+			})
+
 		}, function() {
 			disconnect();
 		});
 	});
 
 	function draw_characters() {
+		$(".character").off();
+		$("#character_picture").attr("src", "/assets/images/loading.gif");
 
-		$("#images-supercontainer").html("<div class=\"images-container\"></div>");
 
-		var sorted_characters = characters.slice();
 		var html = "";
-		sorted_characters.sort( function (character1, character2) {
-			return character2.group - character1.group;
-		});
-
-		var present_group;
-
-		console.log(sorted_characters);
-
-		sorted_characters.forEach(function(character) {
-			if(character.group >= 0 && present_group !== character.group) {
-					if (present_group != undefined) {
-						html += "</div>";
-					}
-					present_group = character.group;
-					if(!groups[present_group]) {
-						groups[present_group] = "rgba(" + randomInt(0, 255) + ", " + randomInt(0, 255) + ", " + randomInt(0, 255) + ", 0.6)";
-					}
-					html += "<div class='group' id='group-" + present_group + "'>";
-			}
-			if(character.group == -1 && present_group != undefined) {
-				html += "</div>";
-				present_group = undefined;
-			}
-			html += "<div class='character' id='character-" + character._id + "'><div class='character-image'></div><div class='character-name'></div></div>";
-		});
-
-		if(present_group != undefined) html += "</div>";
-
-		$(".images-container").html(html);
-
-		for(var i = 0; i < groups.length; i++) {
-			if(groups[i]) $("#group-" + i).css("background-color", groups[i]);
-		}
-
 		characters.forEach(function(character) {
-			$("#character-" + character._id + " .character-image").css("background-image", "url(\"" + character.img + "\")");
-			$("#character-" + character._id + " .character-name").html(character.name);
+			if(selected_character != character._id) html += "<div id='character-" + character._id + "' class='list-element character'>" + character.name + "</div>";
+			else html += "<div id='character-" + character._id + "' class='list-element character list-element-selected'>" + character.name + "</div>";
 		});
 
-		// Listener to enable to check the next listeners
-		$(".images-container").on("mouseup", function() {
-			mouse_up = true;
+		$("#character_list").html(html);
+		$(".character").on("click", function() {
+			character_click(this);
 		});
 
-		// First listener, first executed
-		$(".character").draggable();
-		$(".character").droppable({
-			drop: function( event, ui ) {
-
-				if(!mouse_up) return;
-
-				mouse_up = false;
-
-		    	var host = get_character(parseInt($(this).attr("id").replace("character-", "")));
-		    	var guest = get_character(parseInt($(ui.draggable[0]).attr("id").replace("character-", "")));
-
-		    	join_group(host, guest);
-
-		    }
-		});
-
-		// Second listener, second executed
-		$(".group").droppable({
-			drop: function( event, ui ) {
-
-				if(!mouse_up) return;
-
-				mouse_up = false;
-
-				var host_group = parseInt($(this).attr("id").replace("group-", ""));
-				var guest = get_character(parseInt($(ui.draggable[0]).attr("id").replace("character-", "")));
-
-				guest.group = host_group;
-
-				save_characters(function() {
-					draw_characters();
-				});
-
-			}
-		});
-
-		// Third listener, third executed
-		$(".images-container").droppable({
-			drop: function( event, ui ) {
-
-				if(!mouse_up) return;
-
-				mouse_up = false;
-
-				var guest = get_character(parseInt($(ui.draggable[0]).attr("id").replace("character-", "")));
-
-				guest.group = -1;
-
-				save_characters(function() {
-					draw_characters();
-				});
-
-			} 
-		});
-
-	}
-
-	// With host I mean the one who stayed fixed and with guest I mean the one who was dropped into the host
-	function join_group(host, guest) {
-		if(host.group === -1) {
-			guest.group = -1;
-			var taken_groups = [];
-
-			characters.forEach(function(character) {
-				if(!taken_groups.includes(character.group)) taken_groups.push(character.group);
-			});
-
-			taken_groups.sort(function(a,b) {
-				return b-a;
-			});
-
-			host.group = taken_groups[0] + 1;
+		if(selected_character !== undefined) {
+			var my_character = get_selected_character();
+			$("#character_picture").attr("src", my_character.img);
+			$("#character_picture").show();
+			$(".file_selector").attr("disabled", false);
+			$(".disablable").removeClass('btn-disabled');
+			$("#modalExtLinkButton").attr("data-toggle", "modal");
+		} else {
+			$("#character_picture").hide();
+			$(".file_selector").attr("disabled", true);
+			$(".disablable").addClass('btn-disabled');
+			$("#modalExtLinkButton").removeAttr("data-toggle");
 		}
-		
-		guest.group = host.group;
-
-		save_characters(function() {
-			draw_characters();
-		});
+		$("#character_name").val("");
+		$(".file_selector").val("");
 
 	}
 
@@ -197,31 +227,35 @@
 		return null;
 	}
 
-	function check_isolated_characters() {
-		var groups_count = [];
+	function character_click(self) {
 
-		characters.forEach(function(character) {
-			if(character.group != -1) {
-				if(groups_count[character.group] == undefined) groups_count[character.group] = 0;
-				groups_count[character.group]++;
-			}
+		var previous_character = selected_character;
+		selected_character = parseInt($(self).attr("id").replace("character-", ""));
+
+		// AJAX al evento elegido para obtener informacion
+
+		if(previous_character !== selected_character) draw_characters();
+
+	}
+
+	function add_random_character() {
+		var new_id = 1;
+		if(characters.length > 0) {
+			new_id = characters[characters.length-1]._id + 1;
+		}
+		characters.push({
+			_id: new_id,
+			name: "Character " + new_id,
+			img: "/assets/images/" + sample(profiles)
 		});
 
-		var removing_groups = [];
-
-		for(var i = 0; i < groups_count.length; i++) {
-			if(groups_count[i] != undefined && groups_count[i] <= 1) {
-				characters.forEach(function(character) {
-					if(character.group == i) character.group = -1;
-				});
-			}
-		}
+		save_characters(function() {
+			selected_character = new_id;
+			draw_characters();
+		});
 	}
 
 	function save_characters(callback) {
-
-		check_isolated_characters();
-
 		$.ajax({
 			type: "PUT",
 			url: "/api/users/" + user_id + "/events/" + current_event,
@@ -229,7 +263,7 @@
 			contentType: "application/json; charset=utf-8",
 			dataType: "html",
 			success: function() {
-				if(callback) callback();
+				callback();
 			},
 			error: function(response) {
 				if(response.status == 401) {
@@ -240,6 +274,24 @@
 				}
 				disconnect();
 			}
+		});
+	}
+
+	function rename_character() {
+		if(selected_character == undefined) return;
+
+		var name_field = $("#character_name");
+
+		if(!name_field.val()) {
+			// TODO custom alert
+			alert("The name of this character can not be empty");
+			return;
+		}
+
+		get_selected_character().name = name_field.val();
+
+		save_characters(function() {
+			draw_characters();
 		});
 	}
 
