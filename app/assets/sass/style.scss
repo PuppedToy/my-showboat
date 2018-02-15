@@ -152,6 +152,10 @@ $theme_color_6: #6F522D;
 		border-color: $theme_color_1;
 		background-color: $theme_color_3;
 		overflow-y: auto;
+		background-position: center;
+		background-repeat: no-repeat;
+		background-size: 30%;
+		background-image: url(../images/loading.gif);
 	}
 
 	#event_info {
@@ -337,6 +341,10 @@ $theme_color_6: #6F522D;
 
 .no-padding {
 	padding: 0px;
+}
+
+.modal-content input[type=text], .modal-content .btn-modal {
+	background-color: $theme_color_2;
 }
 
 header {

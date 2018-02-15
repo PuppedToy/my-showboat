@@ -100,6 +100,7 @@
 			contentType: "application/json; charset=utf-8",
 			dataType: "json",
 			success: function(response){
+				$(".list").css("background-image", "none");
 				events = response.events;
 				drawEvents();
 			}
@@ -126,6 +127,7 @@
 	function eventClick(self) {
 
 		selected_event = parseInt($(self).attr("id").replace("event-", ""));
+		$("#event_info").html("");
 		$("#event_info").css("background-image", "url(/assets/images/loading.gif)");
 
 		// AJAX al evento elegido para obtener informacion

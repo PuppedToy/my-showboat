@@ -27,6 +27,7 @@
 						draw_characters();
 					}
 
+					$(".list").css("background-image", "none");
 				},
 				error: function(response) {
 					if(response.status == 401) {
@@ -37,6 +38,7 @@
 						alert("Internal server error. Please, contact the adminsitrator or try it later");
 						disconnect();
 					}
+					$(".list").css("background-image", "none");
 				}
 			});
 
@@ -80,6 +82,14 @@
 						break;
 					}
 				}
+			});
+
+			$("#modalExtLinkButton").on("click", function() {
+
+				if(selected_character === undefined) return;
+
+				$("#extLinkInput").val("");
+
 			});
 
 			$("#uploadedFile").on("change", function() {
@@ -175,6 +185,8 @@
 
 	function draw_characters() {
 		$(".character").off();
+		$("#character_picture").attr("src", "/assets/images/loading.gif");
+
 
 		var html = "";
 		characters.forEach(function(character) {
@@ -193,10 +205,12 @@
 			$("#character_picture").show();
 			$(".file_selector").attr("disabled", false);
 			$(".disablable").removeClass('btn-disabled');
+			$("#modalExtLinkButton").attr("data-toggle", "modal");
 		} else {
 			$("#character_picture").hide();
 			$(".file_selector").attr("disabled", true);
 			$(".disablable").addClass('btn-disabled');
+			$("#modalExtLinkButton").removeAttr("data-toggle");
 		}
 		$("#character_name").val("");
 		$(".file_selector").val("");
@@ -265,6 +279,8 @@
 	}
 
 	function rename_character() {
+		if(selected_character == undefined) return;
+
 		var name_field = $("#character_name");
 
 		if(!name_field.val()) {

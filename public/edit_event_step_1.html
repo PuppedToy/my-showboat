@@ -49,7 +49,7 @@
 						</div>
 					    <form method='post' encType="multipart/form-data">
 					        <input class="file_selector" type="file" id="uploadedFile" name="uploadedFile" accept="image/x-png,image/gif,image/jpeg" />
-					        <label for='uploadedFile' class='btn btn-font-xs disablable' id='uploadedFileLabel'>Upload</label> <label class='btn btn-font-xs disablable' data-toggle="modal" data-target="#modalExtlink">Use external link</label>
+					        <label for='uploadedFile' class='btn btn-font-xs disablable' id='uploadedFileLabel'>Upload</label> <label id="modalExtLinkButton" class='btn btn-font-xs disablable' data-toggle="modal" data-target="#modalExtlink">Use external link</label>
 					        <!--<input id='upload_button' type='button' class='btn btn-font-xs' value='Upload!' />-->
 					    </form>
 						<!--<input class="file_selector" type="file" onchange="test()">
@@ -78,7 +78,7 @@
 					<h4 class="modal-title text-center">Copy the external image link below</h4>
 				</div>
 				<div class="modal-body">
-					<p style='height: 40px;'><input style="width: 70%; float: left; margin-top: 4px;" type="text" id='extLinkInput' placeholder='Image Link Here'><button style="float: right;" class='btn btn-default' id='extLinkButton' data-dismiss="modal">Use this image</button></p>
+					<p style='height: 40px;'><input style="width: 70%; float: left; margin-top: 4px;" type="text" id='extLinkInput' placeholder='Image Link Here'><button style="float: right;" class='btn btn-default btn-modal' id='extLinkButton' data-dismiss="modal">Use this image</button></p>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>

@@ -1,4 +1,4 @@
-var fs = require('fs');
+var fs = require('fs-extra');
 const path = require('path');
 var base_url;
 var mongo = require('mongodb');
@@ -622,7 +622,18 @@ Controller.prototype.delete_vote = function(request, response) {
 module.exports = Controller;
 
 function deleteImage(character, response, client) {
+
 	if(character.img && character.img.indexOf('/assets/custom_images') === 0) {
+		try {
+			fs.ensureDirSync("./public/assets/custom_images");
+		} catch(err) {
+			console.log(err);
+			responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
+			client.close();
+			character.img = "/assets/images/man-1.png";			
+			return false;
+		}
+
 		try {
 			fs.unlinkSync(character.img.replace('/assets/custom_images', path.resolve('./public/assets/custom_images')));
 			character.img = "/assets/images/man-1.png";			
@@ -634,7 +645,9 @@ function deleteImage(character, response, client) {
 			character.img = "/assets/images/man-1.png";			
 			return false;
 		}
-	} return true;
+	} 
+
+	return true;
 }
 
 function searchCharacter(event, character_id) {
