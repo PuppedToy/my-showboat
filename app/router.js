@@ -5,6 +5,7 @@ module.exports = function (router, controller) {
 	router.get('/login', controller.render_login);
 	router.get('/event_list', controller.render_event_list);
 	router.get('/edit_event', controller.render_edit_event);
+	router.get('/vote', controller.render_vote);
 
 
 	/****** API Endpoints ******/

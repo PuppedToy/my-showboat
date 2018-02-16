@@ -13,12 +13,21 @@
 				$("#create").on("click", function() {
 					window.location.href = "/event_list";
 				});
+
+				$("#vote").off("click");
+				$("#vote").on("click", function() {
+					window.location.href = "/vote";
+				});
 			});
 		});
 
 	
 		$("#create").on("click", function() {
 			window.location.href = "/login";
+		});
+
+		$("#vote").on("click", function() {
+			window.location.href = "/vote";
 		});
 
 	});

@@ -1,6 +1,6 @@
 var fs = require('fs-extra');
 const path = require('path');
-var base_url;
+var base_url, vote_factory;
 var mongo = require('mongodb');
 var MongoClient = mongo.MongoClient;
 var config = require('./config');
@@ -14,9 +14,10 @@ var isImage = require('is-image');
 
 // TODO Clean up this code please. It's messy as hell
 
-function Controller(url) {
+function Controller(url, vote_factory) {
 
 	base_url = url;
+	vote_factory = vote_factory;
 
 };
 
@@ -39,11 +40,18 @@ Controller.prototype.render_event_list = function(request, response) {
 
 }
 
+
 Controller.prototype.render_edit_event = function(request, response) {
 
 	var step = request.query.step || 1;
 
 	response.sendFile( path.join( base_url, 'public', 'edit_event_step_' + step + '.html'));
+
+}
+
+Controller.prototype.render_vote = function(request, response) {
+
+	response.sendFile( path.join( base_url, 'public', 'vote.html'));
 
 }
 

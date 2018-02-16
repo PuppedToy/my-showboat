@@ -265,6 +265,45 @@ $theme_color_6: #6F522D;
 		width: 100% !important;
 	}
 
+	&.vote {
+
+		.main_input {
+			font-size: 4em;
+			width: 80%;
+			border-style: inset;
+			border-width: 2px;
+			border-color: $theme_color_1;
+		}
+
+		.title-box {
+
+			& h1 {
+				font-size: 3em;
+			}
+
+			width: 100%;
+			margin-bottom: 50px;
+		}
+
+		.input-box {
+			width: 100%;
+			margin-bottom: 50px;
+		}
+
+		.btn-vote {
+			font-size: 3em;
+		}
+
+		#step1 {
+			width: 100%;
+		}
+
+		#step2 {
+			display: none;
+		}
+
+	}
+
 	#event_info, #event_settings {
 		padding: 2%;
 		font-size: 18px;
@@ -302,7 +341,7 @@ $theme_color_6: #6F522D;
 .aligned--top  {
 	align-self: flex-start;
 }
-
+	
 .aligned--bottom {
 	align-self: flex-end;
 }
