@@ -275,6 +275,25 @@ $theme_color_6: #6F522D;
 			border-color: $theme_color_1;
 		}
 
+		span {
+			color: #0101DF;
+			text-decoration: underline;
+			font-size: 1.3em;
+		}
+
+		.host {
+			width: 20%;
+		}
+
+		.host_title {
+			height: 30%;
+		}
+
+		.list {
+			height: 50%;
+			background-image: none;
+		}
+
 		.title-box {
 
 			& h1 {
@@ -348,6 +367,10 @@ $theme_color_6: #6F522D;
 
 .height100 {
 	height: 100%;
+}
+
+.height40 {
+	height: 40%;
 }
 
 .roundy-enter {

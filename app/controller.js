@@ -9,7 +9,6 @@ var tools = require('../lib/api-tools');
 var md5 = require('md5');
 var TicketFactory = require('../lib/ticket-factory');
 var ticket_factory = new TicketFactory();
-var formidable = require('formidable');
 var isImage = require('is-image');
 
 // TODO Clean up this code please. It's messy as hell
@@ -52,6 +51,12 @@ Controller.prototype.render_edit_event = function(request, response) {
 Controller.prototype.render_vote = function(request, response) {
 
 	response.sendFile( path.join( base_url, 'public', 'vote.html'));
+
+}
+
+Controller.prototype.render_host_vote = function(request, response) {
+
+	response.sendFile( path.join( base_url, 'public', 'host_vote.html'));
 
 }
 

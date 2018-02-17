@@ -87,6 +87,15 @@
 				window.location.href = "/edit_event";
 			});
 
+			$("#vote_button").on("click", function() {
+				if(selected_event === undefined) {
+					alert("There is no event selected to edit!");
+					return;
+				}
+				Cookies.set("current_event", selected_event, {expires: 1});
+				window.location.href = "/host_vote";
+			});
+
 		}, function() {
 			window.location.href = "/";	
 		});
@@ -139,6 +148,8 @@
 				contentType: "application/json; charset=utf-8",
 				dataType: "json",
 				success: function(response){
+
+					if(!response.characters) response.characters = [];
 
 					var html = "<p><strong>Name: </strong>" + response.name + "</p>";
 					html += "<p><strong>Characters: </strong>" + response.characters.map(function(char) {
