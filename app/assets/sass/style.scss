@@ -223,42 +223,51 @@ $theme_color_6: #6F522D;
 
 		}
 
-		.character {
+	}
 
-			border-radius: 10px;
-			
+	.character {
 
-			.character-image {
-				background-repeat: no-repeat;
-				background-size: cover;
-				background-position: center;
-				border-style: none;
-				height: 100px;
-				width: 100%;
-			}
+		border-radius: 10px;
 
-			.character-name {
-				border-style: none;
-				text-align: center;
-				height: 20px;
-				width: 100%;
-			}
+		.character-image {
+			background-repeat: no-repeat;
+			background-size: cover;
+			background-position: center;
+			border-style: none;
+			height: 100px;
+			width: 100%;
+			border-radius: 10px 10px 0px 0px;
+			border-bottom-style: solid;
+			border-color: #000;
+			border-width: 1px; 
 
-			background-color: white;
-			border-color: black;
-			border-style: solid;
-			border-width: 1px;
-			height: 120px;
-			width: 100px;
-			display: inline-block;
-			margin: 2.5% 2.5% 2.5% 2.5%;
-			cursor: move;
-
-			&:active {
-			    cursor: grabbing;
-			}
 		}
 
+		.character-name {
+			border-style: none;
+			text-align: center;
+			height: 20px;
+			width: 100%;
+		}
+
+		&.character_left {
+			margin: 1% 1% 1% 1%;
+			cursor: default !important;
+		}
+
+		background-color: white;
+		border-color: black;
+		border-style: solid;
+		border-width: 1px;
+		height: 120px;
+		width: 100px;
+		display: inline-block;
+		margin: 2.5% 2.5% 2.5% 2.5%;
+		cursor: move;
+
+		&:active {
+		    cursor: grabbing;
+		}
 	}
 
 	.settings-save-btn {
@@ -286,7 +295,7 @@ $theme_color_6: #6F522D;
 		}
 
 		.host_title {
-			height: 30%;
+			height: 50%;
 		}
 
 		.list {
@@ -311,6 +320,13 @@ $theme_color_6: #6F522D;
 
 		.btn-vote {
 			font-size: 3em;
+		}
+
+		.not_voted_list {
+			overflow-x: hidden;
+			white-space: nowrap;
+			padding: 0;
+			height: 145px;
 		}
 
 		#step1 {

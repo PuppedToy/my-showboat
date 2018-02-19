@@ -8,17 +8,25 @@ var responses = require('../lib/api-responses');
 var tools = require('../lib/api-tools');
 var md5 = require('md5');
 var TicketFactory = require('../lib/ticket-factory');
+var VoteFactory = require('../lib/vote_factory');
 var ticket_factory = new TicketFactory();
+var vote_factory = new VoteFactory();
 var isImage = require('is-image');
 
 // TODO Clean up this code please. It's messy as hell
 
-function Controller(url, vote_factory) {
+function Controller(url, cb) {
 
 	base_url = url;
 	vote_factory = vote_factory;
 
 };
+
+Controller.prototype.getFactories = function(cb) {
+
+	if(cb) cb(ticket_factory, vote_factory);
+
+}
 
 
 Controller.prototype.render_index = function(request, response) {
@@ -347,7 +355,7 @@ Controller.prototype.get_event = function(request, response) {
 
 	authenticateWithTicket(request, response, function(db, client, user_found) {
 
-		var event_found = searchEvent(user_found, request.params.eventId);
+		var event_found = tools.searchEvent(user_found, request.params.eventId);
 
 		if(event_found) {
 			responses.ok(response, event_found);
@@ -366,7 +374,7 @@ Controller.prototype.edit_event = function(request, response) {
 
 	authenticateWithTicket(request, response, function(db, client, user_found) {
 
-		var event_found = searchEvent(user_found, request.params.eventId);
+		var event_found = tools.searchEvent(user_found, request.params.eventId);
 
 		if(request.body.update) {
 			for(var key in request.body.update) {
@@ -442,7 +450,7 @@ Controller.prototype.upload_link_image = function(request, response) {
 
 	authenticateWithTicket(request, response, function(db, client, user_found) {
 
-		var event_found = searchEvent(user_found, request.params.eventId);
+		var event_found = tools.searchEvent(user_found, request.params.eventId);
 
 		if(!event_found) {
 			responses.not_found(response, "Event requested has not been found");
@@ -450,7 +458,7 @@ Controller.prototype.upload_link_image = function(request, response) {
 			return;
 		}
 
-		var character_found = searchCharacter(event_found, request.body.character);
+		var character_found = tools.searchCharacter(event_found, request.body.character);
 
 		if(!character_found) {
 			responses.not_found(response, "The character requested does not exist");
@@ -490,7 +498,7 @@ Controller.prototype.upload_image = function(request, response) {
 
 	authenticateWithTicket(request, response, function(db, client, user_found) {
 
-		var event_found = searchEvent(user_found, request.params.eventId);
+		var event_found = tools.searchEvent(user_found, request.params.eventId);
 
 		if(!event_found) {
 			responses.not_found(response, "Event requested has not been found");
@@ -498,7 +506,7 @@ Controller.prototype.upload_image = function(request, response) {
 			return;
 		}
 
-		var character_found = searchCharacter(event_found, request.body.character);
+		var character_found = tools.searchCharacter(event_found, request.body.character);
 
 		if(!character_found) {
 			responses.not_found(response, "The character requested does not exist");
@@ -661,35 +669,6 @@ function deleteImage(character, response, client) {
 	} 
 
 	return true;
-}
-
-function searchCharacter(event, character_id) {
-
-	character_found = null;
-
-	for(var i = 0; !character_found && i < event.characters.length; i++) {
-		if(event.characters[i]._id == character_id) {
-			character_found = event.characters[i];
-		}
-	}
-
-	return character_found;
-
-}
-
-function searchEvent(user, event_id) {
-
-	if(!user.events) user.events = [];
-	event_found = null;
-
-	for(var i = 0; !event_found && i < user.events.length; i++) {
-		if(user.events[i]._id == event_id) {
-			event_found = user.events[i];
-		}
-	}
-
-	return event_found;
-
 }
 
 function authenticateWithTicket(request, response, success_cb, error_cb) {

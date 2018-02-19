@@ -153,7 +153,7 @@
 
 					var html = "<p><strong>Name: </strong>" + response.name + "</p>";
 					html += "<p><strong>Characters: </strong>" + response.characters.map(function(char) {
-						return char.name
+						return char.name;
 					}).join(", ") + "</p>";
 
 					$("#event_info").css("background-image", "none");
