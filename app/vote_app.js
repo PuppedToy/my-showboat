@@ -6,7 +6,6 @@ var tools = require('../lib/api-tools');
 module.exports = function(server, ticket_factory, vote_factory) {
 
 	var io = require('socket.io')(server);
-	var votes = [];
 
 	io.on('connection', function(socket) {
 
@@ -24,8 +23,16 @@ module.exports = function(server, ticket_factory, vote_factory) {
 			});
 		});
 
+		socket.on('introduce_code', function(code) {
+			if(!vote_factory.addGuest(socket, code)) {
+				error("The code does not exist");
+			}
+		});
+
 		socket.on('disconnect', function(data) {
-			console.log("Anonymous disconnection!");
+			
+			// TODO
+
 		});
 
 		function error(msg) {
@@ -48,13 +55,11 @@ module.exports = function(server, ticket_factory, vote_factory) {
 					return;
 				}
 
-				var new_vote = vote_factory.newVote(event, user_found, socket);
+				var new_vote = vote_factory.newVote(event, user_found, ticket, socket);
 				if(!new_vote) {
 					error("Could not create new vote for event " + event_id);
 					return;	
 				}
-
-				votes.push(new_vote);
 
 				if(cb) cb(new_vote);
 
