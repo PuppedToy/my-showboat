@@ -335,6 +335,27 @@ $theme_color_6: #6F522D;
 
 		#step2 {
 			display: none;
+			height: 100%;
+
+			.images-container {
+				width: 100%;
+				height: 27%;
+				margin-top: 20px;
+			} 
+
+			.title {
+				font-size: 1.6em;
+				height: 20%;
+				width: 100%;
+				text-align: center;
+				margin-top: 20px;
+			}
+
+			.btn-start {
+				margin-top: 20px;
+				font-size: 1.8em;
+			}
+
 		}
 
 	}
@@ -446,6 +467,14 @@ header {
 		color: $theme_color_3;
 		text-decoration: underline;
 		cursor: pointer;
+	}
+
+	.error {
+		width: 102%;
+		position: absolute;
+		display: none;
+		font-size: 1.7em;
+		height: 11%;
 	}
 
 	.btn {

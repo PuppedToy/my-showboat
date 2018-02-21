@@ -24,8 +24,12 @@ module.exports = function(server, ticket_factory, vote_factory) {
 		});
 
 		socket.on('introduce_code', function(code) {
-			if(!vote_factory.addGuest(socket, code)) {
+			let vote = vote_factory.addGuest(socket, code);
+			if(!vote) {
 				error("The code does not exist");
+			}
+			else {
+				socket.emit('successful_introduce_code', vote.characters_left, vote.event.characters);
 			}
 		});
 
