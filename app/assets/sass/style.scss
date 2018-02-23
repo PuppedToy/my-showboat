@@ -67,6 +67,7 @@ $theme_color_6: #6F522D;
 		background-color: $unabled_color_1;
 		cursor: default;
 		color: $unabled_color_2;
+		pointer-events: none;
 	}
 
 	.btn-font-sm {
@@ -230,16 +231,16 @@ $theme_color_6: #6F522D;
 		border-radius: 10px;
 
 		.character-image {
-			background-repeat: no-repeat;
+			background-repeat: no-repeat, no-repeat;
 			background-size: cover;
-			background-position: center;
+			background-position: center, center;
 			border-style: none;
 			height: 100px;
 			width: 100%;
 			border-radius: 10px 10px 0px 0px;
 			border-bottom-style: solid;
-			border-color: #000;
-			border-width: 1px; 
+			border-color: inherit;
+			border-width: 1px;
 
 		}
 
@@ -339,8 +340,7 @@ $theme_color_6: #6F522D;
 
 			.images-container {
 				width: 100%;
-				height: 27%;
-				margin-top: 20px;
+				height: 60%;
 			} 
 
 			.title {

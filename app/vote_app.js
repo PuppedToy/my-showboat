@@ -11,6 +11,8 @@ module.exports = function(server, ticket_factory, vote_factory) {
 
 		console.log("New anonymous connection!");
 
+		var my_vote = null;
+
 		socket.on('test', function (data) {
 			console.log("Working connection!");
 			console.log(data);
@@ -29,8 +31,19 @@ module.exports = function(server, ticket_factory, vote_factory) {
 				error("The code does not exist");
 			}
 			else {
+				my_vote = vote;
 				socket.emit('successful_introduce_code', vote.characters_left, vote.event.characters);
 			}
+		});
+
+		socket.on('select_characters', function(selected_characters) {
+
+			socket.emit('successful_select_characters');
+
+			// TODO
+
+			io.emit('refresh');
+
 		});
 
 		socket.on('disconnect', function(data) {
