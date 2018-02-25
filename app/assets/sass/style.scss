@@ -241,7 +241,14 @@ $theme_color_6: #6F522D;
 			border-bottom-style: solid;
 			border-color: inherit;
 			border-width: 1px;
+		}
 
+		&.character-disabled {
+			pointer-events: none;
+
+			.character-image {
+				filter: grayscale(100%);	
+			}
 		}
 
 		.character-name {
@@ -356,6 +363,10 @@ $theme_color_6: #6F522D;
 				font-size: 1.8em;
 			}
 
+		}
+
+		#step3 {
+			display: none;
 		}
 
 	}

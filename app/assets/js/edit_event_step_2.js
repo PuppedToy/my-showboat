@@ -183,18 +183,18 @@
 	});
 
 	function draw_characters() {
-		$(".character").off();
+		$(".character-elem").off();
 		$("#character_picture").attr("src", "/assets/images/loading.gif");
 
 
 		var html = "";
 		characters.forEach(function(character) {
-			if(selected_character != character._id) html += "<div id='character-" + character._id + "' class='list-element character'>" + character.name + "</div>";
-			else html += "<div id='character-" + character._id + "' class='list-element character list-element-selected'>" + character.name + "</div>";
+			if(selected_character != character._id) html += "<div id='character-" + character._id + "' class='list-element character-elem'>" + character.name + "</div>";
+			else html += "<div id='character-" + character._id + "' class='list-element character-elem list-element-selected'>" + character.name + "</div>";
 		});
 
 		$("#character_list").html(html);
-		$(".character").on("click", function() {
+		$(".character-elem").on("click", function() {
 			character_click(this);
 		});
 

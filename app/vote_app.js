@@ -11,7 +11,7 @@ module.exports = function(server, ticket_factory, vote_factory) {
 
 		console.log("New anonymous connection!");
 
-		var my_vote = null;
+		var my_vote = null, my_guest = null;
 
 		socket.on('test', function (data) {
 			console.log("Working connection!");
@@ -26,23 +26,26 @@ module.exports = function(server, ticket_factory, vote_factory) {
 		});
 
 		socket.on('introduce_code', function(code) {
-			let vote = vote_factory.addGuest(socket, code);
+			let {vote, guest} = vote_factory.addGuest(socket, code);
 			if(!vote) {
 				error("The code does not exist");
 			}
 			else {
 				my_vote = vote;
-				socket.emit('successful_introduce_code', vote.characters_left, vote.event.characters);
+				my_guest = guest;
+				socket.emit('successful_introduce_code', my_vote.characters_left, my_vote.event.characters);
 			}
 		});
 
 		socket.on('select_characters', function(selected_characters) {
 
-			socket.emit('successful_select_characters');
+			if (vote_factory.associateCharacters(my_vote.id, my_guest.id, selected_characters)) {
+				socket.emit('successful_select_characters');
+			} else {
+				error("An error has ocurred. Please, repeat the step");
+			}
 
-			// TODO
-
-			io.emit('refresh');
+			socket.broadcast.emit('refresh', my_vote.characters_left, my_vote.event.characters);
 
 		});
 
