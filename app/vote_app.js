@@ -45,7 +45,7 @@ module.exports = function(server, ticket_factory, vote_factory) {
 				error("An error has ocurred. Please, repeat the step");
 			}
 
-			socket.broadcast.emit('refresh', my_vote.characters_left, my_vote.event.characters);
+			socket.broadcast.emit('refresh', my_vote.characters_left);
 
 		});
 

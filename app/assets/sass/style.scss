@@ -341,7 +341,7 @@ $theme_color_6: #6F522D;
 			width: 100%;
 		}
 
-		#step2 {
+		#step2, #step3 {
 			display: none;
 			height: 100%;
 
@@ -363,10 +363,6 @@ $theme_color_6: #6F522D;
 				font-size: 1.8em;
 			}
 
-		}
-
-		#step3 {
-			display: none;
 		}
 
 	}

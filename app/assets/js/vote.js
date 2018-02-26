@@ -1,9 +1,32 @@
 (function($) {
 
+	// Global app variables
+
 	var socket = io();
 	var emitted = false;
+	var characters = [];
 	var my_characters = [];
 	var step = 1;
+	var current_character = null;
+	var available_coins = [];
+
+	var my_votes; // Type Votes
+
+	function Votes() {
+		available_coins.forEach(function(coin) {
+			this[coin] = null;
+		});
+	}
+
+	Votes.prototype.isCompleted = function() {
+
+		for(var i = 0; i < available_coins.length; i++) {
+			if(this[available_coins[i]] === null) return false;
+		}
+
+		return true;
+
+	};
 
 	$(document).ready(function() {
 		
@@ -36,24 +59,26 @@
 		emitted = false;
 	});
 
-	socket.on("successful_introduce_code", function(characters_left, characters) {
+	socket.on("successful_introduce_code", function(characters_left, character_list) {
 		step = 2;
 		$("#step1").hide();
 		$("#step2").show();
-		draw_characters(characters_left, characters);
+		characters = character_list;
+		draw_characters(characters_left);
 		emitted = false;
 	});
 
 	socket.on("successful_select_characters", function() {
 		step = 3;
 		$("#step2").hide();
+
+		next_character();
+
 		$("#step3").show();
 		emitted = false;
 	});
 
-	socket.on("refresh", function(characters_left, characters) {
-
-		// TODO Check this
+	socket.on("refresh", function(characters_left) {
 
 		if(step !== 2 || emitted) return;
 
@@ -68,8 +93,6 @@
 			if(characters_left_ids.includes(character._id)) taken_characters.splice(taken_characters.indexOf(character), 1);
 		});
 
-		console.log(taken_characters);
-
 		taken_characters.forEach(function(character) {
 			var index = my_characters.indexOf(character._id);
 			if(index >= 0) {
@@ -82,14 +105,11 @@
 			alert("Otro votante ha elegido los siguientes personajes: " + stolen_characters.join(", "));
 		}
 
-		draw_characters(characters_left, characters);
+		draw_characters(characters_left);
 
 	});
 
-	function draw_characters(characters_left, characters) {
-
-		console.log(characters_left);
-		console.log(characters);
+	function draw_characters(characters_left) {
 
 		if(my_characters.length === 0) {
 			$("#vote-button").addClass("btn-disabled");
@@ -107,6 +127,12 @@
 
 		$("#character_container").html(html);
 
+		if(step === 2) setup_characters_step2(characters_left);
+		else if(step === 3) setup_characters_step3(characters_left);
+
+	}
+
+	function setup_characters_step2(characters_left) {
 		characters.forEach(function(character) {
 			if(is_my_character(character)) {
 				$("#character-" + character._id + " .character-image").css("background-image", "url(./assets/images/tick.png), url(" + character.img + ")");	
@@ -122,7 +148,7 @@
 		});
 
 		$(".character").on("click", function() {
-			var id = parseInt($(this).attr("id").replace("character-", ""));
+			var id = get_character_id_from_jquery_object($(this));
 			if(!is_character_left(id, characters_left)) return;
 			var index = my_characters.indexOf(id);
 			if(index < 0) {
@@ -130,9 +156,71 @@
 			} else {
 				my_characters.splice(index, 1);
 			}
-			draw_characters(characters_left, characters);
+			draw_characters(characters_left);
+		});
+	}
+
+	function setup_characters_step3(characters_left) {
+
+		characters.forEach(function(character) {
+			
+			$("#character-" + character._id + " .character-image").css("background-image", "url(\"" + character.img + "\")");	
+			$("#character-" + character._id + " .character-name").html(character.name);
+
+			if(is_in_my_group(character)) {
+				$("#character-" + character._id).addClass("character-disabled");
+			} 
+
 		});
 
+		$(".character").on("click", function() {
+
+			var id = get_character_id_from_jquery_object($(this));
+
+			// TODO Open modal with all the coins and select one
+
+		});
+	}
+
+	function is_in_my_group(character) {
+		return current_character && 
+				(
+					current_character._id == character._id || 
+					(
+						current_character.group !== -1 && 
+						current_character.group != undefined && 
+						current_character.group == character.group
+					)
+				);
+	}
+
+	function next_character() {
+		if(my_characters.length > 0) {
+			current_character = get_character(my_characters.shift());
+			available_coins = set_available_coins();
+		} else {
+			// TODO when characters list finish go to step 4
+		}
+	}
+
+	function set_available_coins() {
+
+		var total_coins = characters.length - 1; // We do not count ourselves
+
+		characters.forEach(function(character) {
+			if(!is_in_my_group(character)) {
+				available_coins.push(total_coins--);
+			}
+		});	
+
+		my_votes = new Votes();
+	}
+
+	function get_character(id) {
+		for(var i = 0; i < characters.length; i++) {
+			if(characters[i]._id == id) return characters[id];
+		}
+		return null;
 	}
 
 	function is_character_left(id, characters_left) {
@@ -145,6 +233,10 @@
 
 		return my_characters.includes(character._id);
 
+	}
+
+	function get_character_id_from_jquery_object($object) {
+		return parseInt($object.attr("id").replace("character-", ""));
 	}
 
 	function error(msg) {
