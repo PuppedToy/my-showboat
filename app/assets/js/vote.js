@@ -28,6 +28,16 @@
 
 	};
 
+	Votes.prototype.getCoin = function(id) {
+
+		for(var i = 0; i < available_coins.length; i++) {
+			if(this[i] && this[i]._id == id) return i;
+		}
+
+		return null;
+
+	} 
+
 	$(document).ready(function() {
 		
 		$("#start-button").on("click", function() {
@@ -70,11 +80,13 @@
 
 	socket.on("successful_select_characters", function() {
 		step = 3;
+		$("#character_container").html("");
 		$("#step2").hide();
 
 		next_character();
 
 		$("#step3").show();
+		draw_characters();
 		emitted = false;
 	});
 
@@ -122,17 +134,22 @@
 		var html = "";
 
 		characters.forEach(function(character) {
-			html += "<div class='character' id='character-" + character._id + "'><div class='character-image'></div><div class='character-name'></div></div>";
+			html += "<div class='character' id='character-" + character._id + "'><div class='character-image'></div><div class='character-name'></div><div class='character-complement'></div></div>";
 		});
 
-		$("#character_container").html(html);
-
-		if(step === 2) setup_characters_step2(characters_left);
-		else if(step === 3) setup_characters_step3(characters_left);
+		if(step === 2) {
+			$("#character_container").html(html);
+			draw_characters_step2(characters_left);
+		}
+		else if(step === 3) {
+			$("#character_container_s3").html(html);
+			draw_characters_step3();
+		}
 
 	}
 
-	function setup_characters_step2(characters_left) {
+	function draw_characters_step2(characters_left) {
+
 		characters.forEach(function(character) {
 			if(is_my_character(character)) {
 				$("#character-" + character._id + " .character-image").css("background-image", "url(./assets/images/tick.png), url(" + character.img + ")");	
@@ -158,26 +175,70 @@
 			}
 			draw_characters(characters_left);
 		});
+
 	}
 
-	function setup_characters_step3(characters_left) {
+	function draw_characters_step3() {
+
+		console.log(my_votes);
 
 		characters.forEach(function(character) {
 			
 			$("#character-" + character._id + " .character-image").css("background-image", "url(\"" + character.img + "\")");	
 			$("#character-" + character._id + " .character-name").html(character.name);
+			$("#character-" + character._id).attr("data-togle", "modal");
+			$("#character-" + character._id).attr("data-target", "#vote_modal");
 
 			if(is_in_my_group(character)) {
 				$("#character-" + character._id).addClass("character-disabled");
-			} 
+			}
+
+			var character_coin = my_votes.getCoin(character._id);
+			if(character_coin != null) {
+				$("#character-" + character._id + " .character-complement").addClass("coin");
+				$("#character-" + character._id + " .character-complement").html(character_coin);
+			}
 
 		});
 
+		$(".character").attr("data-toggle", "modal");
+		$(".character").attr("data-target", "#vote_modal");
+
+		$(".coin").off("click");
+
 		$(".character").on("click", function() {
 
+			console.log(characters);
+			
 			var id = get_character_id_from_jquery_object($(this));
+			var character = get_character(id);
 
-			// TODO Open modal with all the coins and select one
+			console.log(id);
+			console.log(character);
+
+			$(".modal-header").html("Elige la puntuación para " + character.name);
+
+			var modal_html = "";
+
+			available_coins.forEach(function(coin) {
+				modal_html += "<div id='coin-" + coin + "' class='coin aligner'>" + coin + "</div>";
+			});
+
+			$(".modal-body").html(modal_html);
+
+			$(".coin").attr("data-dismiss", "modal");
+			$(".coin").on("click", function() {
+
+				var coin_id = get_numeric_id_from_jquery_object($(this), "coin-");
+
+				// TODO this not working. Characters
+				var character_present_coin = my_votes.getCoin(character);
+				if(character_present_coin != null) my_votes[character_present_coin] = null;
+				my_votes[coin_id] = character;
+
+				draw_characters();
+
+			});
 
 		});
 	}
@@ -197,7 +258,7 @@
 	function next_character() {
 		if(my_characters.length > 0) {
 			current_character = get_character(my_characters.shift());
-			available_coins = set_available_coins();
+			set_available_coins();
 		} else {
 			// TODO when characters list finish go to step 4
 		}
@@ -206,6 +267,7 @@
 	function set_available_coins() {
 
 		var total_coins = characters.length - 1; // We do not count ourselves
+		available_coins = [];
 
 		characters.forEach(function(character) {
 			if(!is_in_my_group(character)) {
@@ -218,7 +280,7 @@
 
 	function get_character(id) {
 		for(var i = 0; i < characters.length; i++) {
-			if(characters[i]._id == id) return characters[id];
+			if(characters[i]._id == id) return characters[i];
 		}
 		return null;
 	}
@@ -236,7 +298,11 @@
 	}
 
 	function get_character_id_from_jquery_object($object) {
-		return parseInt($object.attr("id").replace("character-", ""));
+		return get_numeric_id_from_jquery_object($object, "character-");
+	}
+
+	function get_numeric_id_from_jquery_object($object, replaced_part) {
+		return parseInt($object.attr("id").replace(replaced_part, ""));
 	}
 
 	function error(msg) {
