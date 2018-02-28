@@ -12,16 +12,13 @@ module.exports = function(server, ticket_factory, vote_factory) {
 		console.log("New anonymous connection!");
 
 		var my_vote = null, my_guest = null;
-
-		socket.on('test', function (data) {
-			console.log("Working connection!");
-			console.log(data);
-		});
+		var my_hosted_vote = null;
 
 		socket.on('create_vote', function(user_id, ticket, event_id) {
 			createVote(user_id, ticket, event_id, function(new_vote) {
-				console.log(new_vote.event.characters.length);
 				socket.emit('create_vote_response', new_vote.id, new_vote.characters_left, new_vote.event.characters.length);
+				my_hosted_vote = new_vote;
+				console.log("A new vote with id \"" + new_vote.id + "\" has been created!");
 			});
 		});
 
@@ -33,7 +30,8 @@ module.exports = function(server, ticket_factory, vote_factory) {
 			else {
 				my_vote = vote;
 				my_guest = guest;
-				socket.emit('successful_introduce_code', my_vote.characters_left, my_vote.event.characters);
+				socket.emit('successful_introduce_code', my_vote.id, my_vote.characters_left, my_vote.event.characters);
+				console.log("New guest " + guest.id + " has connected to vote " + vote.id);
 			}
 		});
 
@@ -45,13 +43,41 @@ module.exports = function(server, ticket_factory, vote_factory) {
 				error("An error has ocurred. Please, repeat the step");
 			}
 
-			socket.broadcast.emit('refresh', my_vote.characters_left);
+			my_vote.broadcast_guests(my_guest, 'refresh', my_vote.characters_left);
+
+		});
+
+		socket.on('send_vote', function(character_id, votes) {
+
+			if(my_vote.addVote(character_id, votes)) socket.emit('successful_send_vote');
+			else fatal_error('Internal error when processing your vote.');
 
 		});
 
 		socket.on('disconnect', function(data) {
 			
-			// TODO
+			if(my_hosted_vote) {
+				my_hosted_vote.socket = null;
+				console.log("The host of vote " + my_hosted_vote.id + " has disconnected!");
+				console.log("WARNING: If it does not reconnect in one hour, the vote will be deleted");
+				my_hosted_vote.timer = setTimeout(function() {
+					if(my_hosted_vote.host == null) {
+						my_hosted_vote.broadcast_guests(null, 'app_fatal_error', "The vote has been deleted");
+					}
+				}, 3600);
+			} else if(my_vote && my_guest) {
+				my_vote.deleteGuest(my_guest);
+				my_vote.broadcast_guests(null, 'refresh', my_vote.characters_left);
+				console.log("Guest " + my_guest.id + " has disconnected from vote " + my_vote.id);
+			} else if(my_vote) {
+				console.log("Someone has disconnected from vote " + my_vote.id);
+				console.log("WARNING: This disconnection should have been identified. BUG?");
+			} else if(my_guest) {
+				console.log("Guest " + my_guest.id + " has disconnected from some vote");
+				console.log("WARNING: This disconnection should have been identified. BUG?");
+			} else {
+				console.log("An anonymous user has disconnected");
+			}
 
 		});
 

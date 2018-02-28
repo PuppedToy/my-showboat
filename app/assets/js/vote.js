@@ -12,16 +12,16 @@
 
 	var my_votes; // Type Votes
 
-	function Votes() {
+	function Votes(votes) {
 		available_coins.forEach(function(coin) {
-			this[coin] = null;
+			this[coin] = votes ? votes[coin] : null;
 		});
 	}
 
 	Votes.prototype.isCompleted = function() {
 
 		for(var i = 0; i < available_coins.length; i++) {
-			if(this[available_coins[i]] === null) return false;
+			if(!this[available_coins[i]]) return false;
 		}
 
 		return true;
@@ -31,31 +31,44 @@
 	Votes.prototype.getCoin = function(id) {
 
 		for(var i = 0; i < available_coins.length; i++) {
-			if(this[i] && this[i]._id == id) return i;
+			if(this[available_coins[i]] && this[available_coins[i]]._id == id) return available_coins[i];
 		}
 
 		return null;
 
-	} 
+	}
+
+	Votes.prototype.parseToSend = function() {
+
+		var result = [];
+
+		for(var i = 0; i < available_coins.length; i++) {
+			if(this[available_coins[i]]) {
+				result.push({
+					character_id: this[available_coins[i]],
+					vote: available_coins[i]
+				});
+			}
+		}
+
+		return result;
+
+	}
 
 	$(document).ready(function() {
+
+		check_cookies();
 		
 		$("#start-button").on("click", function() {
-
-			if(emitted) return;
-			emitted = true;
-
-			socket.emit("introduce_code", $("#vote_code_input").val().toUpperCase());
-
+			vote_start($("#vote_code_input").val().toUpperCase());
 		});
 
 		$("#vote-button").on("click", function() {
+			vote_send_characters();
+		});
 
-			if(emitted) return;
-			emitted = true;
-
-			socket.emit("select_characters", my_characters);
-
+		$("#finish-button").on("click", function() {
+			vote_finish();
 		});
 
 		$(".error").on("click", function() {
@@ -69,25 +82,49 @@
 		emitted = false;
 	});
 
-	socket.on("successful_introduce_code", function(characters_left, character_list) {
+	socket.on("app_fatal_error", function(msg) {
+		alert(msg);
+		remove_cookies();
+	});
+
+	socket.on("successful_introduce_code", function(code, characters_left, character_list) {
+		Cookies.set("vote_code", code, {expires: 1});
 		step = 2;
 		$("#step1").hide();
 		$("#step2").show();
 		characters = character_list;
 		draw_characters(characters_left);
 		emitted = false;
+		var selected_characters = Cookies.get("vote_selected_characters");
+
+		if(selected_characters && confirm("Hemos detectado que tenías una votación a medias. ¿Deseas continuarla?")) {
+			my_characters = selected_characters;
+			vote_send_characters();
+		}
 	});
 
 	socket.on("successful_select_characters", function() {
+		Cookies.set("vote_selected_characters", my_characters, {expires: 1});
 		step = 3;
 		$("#character_container").html("");
 		$("#step2").hide();
+
+		var coins = Cookies.get("vote_coins");
+		var current_character_cookie = Cookies.get("vote_current_character");
+		if(coins && current_character_cookie) {
+			current_character = current_character_cookie;
+			my_votes = new Votes(coins);
+		}
 
 		next_character();
 
 		$("#step3").show();
 		draw_characters();
 		emitted = false;
+	});
+
+	socket.on("successful_send_vote", function() {
+		next_character();
 	});
 
 	socket.on("refresh", function(characters_left) {
@@ -232,9 +269,15 @@
 				var coin_id = get_numeric_id_from_jquery_object($(this), "coin-");
 
 				// TODO this not working. Characters
-				var character_present_coin = my_votes.getCoin(character);
+				var character_present_coin = my_votes.getCoin(id);
 				if(character_present_coin != null) my_votes[character_present_coin] = null;
 				my_votes[coin_id] = character;
+
+				if(my_votes.isCompleted()) $("#finish-button").removeClass("btn-disabled");
+				else $("#finish-button").addClass("btn-disabled");
+
+				Cookies.set("vote_current_character", current_character, {expires: 1});
+				Cookies.set("vote_coins", my_votes, {expires: 1});
 
 				draw_characters();
 
@@ -259,8 +302,13 @@
 		if(my_characters.length > 0) {
 			current_character = get_character(my_characters.shift());
 			set_available_coins();
+			draw_characters();
+			return true;
 		} else {
-			// TODO when characters list finish go to step 4
+			$("#step3").hide();
+			$("#step4").show();
+			remove_cookies();
+			return false;
 		}
 	}
 
@@ -276,6 +324,34 @@
 		});	
 
 		my_votes = new Votes();
+	}
+
+	function vote_start(code) {
+		if(emitted) return;
+		emitted = true;
+
+		socket.emit("introduce_code", code);
+	}
+
+	function vote_send_characters() {
+		if(emitted) return;
+		emitted = true;
+
+		socket.emit("select_characters", my_characters);
+	}
+
+	function vote_finish() {
+		if(emitted) return;
+		emitted = true;
+
+		socket.emit("send_vote", current_character, my_votes.parseToSend());
+	}
+
+	function check_cookies() {
+
+		var code = Cookies.get('vote_code');
+		if(code) vote_start(code);
+
 	}
 
 	function get_character(id) {
@@ -303,6 +379,13 @@
 
 	function get_numeric_id_from_jquery_object($object, replaced_part) {
 		return parseInt($object.attr("id").replace(replaced_part, ""));
+	}
+
+	function remove_cookies() {
+		Cookies.remove('vote_code');
+		Cookies.remove('vote_selected_characters');
+		Cookies.remove('vote_current_characters');
+		Cookies.remove('vote_coins');
 	}
 
 	function error(msg) {
