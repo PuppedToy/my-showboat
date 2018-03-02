@@ -88,6 +88,7 @@
 	});
 
 	socket.on("successful_introduce_code", function(code, characters_left, character_list) {
+
 		Cookies.set("vote_code", code, {expires: 1});
 		step = 2;
 		$("#step1").hide();
@@ -95,7 +96,8 @@
 		characters = character_list;
 		draw_characters(characters_left);
 		emitted = false;
-		var selected_characters = Cookies.get("vote_selected_characters");
+		var selected_characters = JSON.parse(Cookies.get("vote_selected_characters"));
+
 
 		if(selected_characters && confirm("Hemos detectado que tenías una votación a medias. ¿Deseas continuarla?")) {
 			my_characters = selected_characters;
@@ -104,13 +106,13 @@
 	});
 
 	socket.on("successful_select_characters", function() {
-		Cookies.set("vote_selected_characters", my_characters, {expires: 1});
+		Cookies.set("vote_selected_characters", JSON.stringify(my_characters), {expires: 1});
 		step = 3;
 		$("#character_container").html("");
 		$("#step2").hide();
 
-		var coins = Cookies.get("vote_coins");
-		var current_character_cookie = Cookies.get("vote_current_character");
+		var coins = JSON.parse(Cookies.get("vote_coins"));
+		var current_character_cookie = JSON.parse(Cookies.get("vote_current_character"));
 		if(coins && current_character_cookie) {
 			current_character = current_character_cookie;
 			my_votes = new Votes(coins);
@@ -276,8 +278,8 @@
 				if(my_votes.isCompleted()) $("#finish-button").removeClass("btn-disabled");
 				else $("#finish-button").addClass("btn-disabled");
 
-				Cookies.set("vote_current_character", current_character, {expires: 1});
-				Cookies.set("vote_coins", my_votes, {expires: 1});
+				Cookies.set("vote_current_character", JSON.stringify(current_character), {expires: 1});
+				Cookies.set("vote_coins", JSON.stringify(my_votes), {expires: 1});
 
 				draw_characters();
 
