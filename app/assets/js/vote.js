@@ -13,8 +13,9 @@
 	var my_votes; // Type Votes
 
 	function Votes(votes) {
+		var self = this;
 		available_coins.forEach(function(coin) {
-			this[coin] = votes ? votes[coin] : null;
+			self[coin] = (votes ? votes[coin] : null);
 		});
 	}
 
@@ -45,7 +46,7 @@
 		for(var i = 0; i < available_coins.length; i++) {
 			if(this[available_coins[i]]) {
 				result.push({
-					character_id: this[available_coins[i]],
+					character_id: this[available_coins[i]]._id,
 					vote: available_coins[i]
 				});
 			}
@@ -96,12 +97,14 @@
 		characters = character_list;
 		draw_characters(characters_left);
 		emitted = false;
-		var selected_characters = JSON.parse(Cookies.get("vote_selected_characters"));
+		var selected_characters = Cookies.get("vote_selected_characters");
 
 
-		if(selected_characters && confirm("Hemos detectado que tenías una votación a medias. ¿Deseas continuarla?")) {
-			my_characters = selected_characters;
+		if(selected_characters) {
+			my_characters = JSON.parse(selected_characters);
 			vote_send_characters();
+		} else {
+
 		}
 	});
 
@@ -111,14 +114,12 @@
 		$("#character_container").html("");
 		$("#step2").hide();
 
-		var coins = JSON.parse(Cookies.get("vote_coins"));
-		var current_character_cookie = JSON.parse(Cookies.get("vote_current_character"));
-		if(coins && current_character_cookie) {
-			current_character = current_character_cookie;
-			my_votes = new Votes(coins);
-		}
-
 		next_character();
+
+		var coins = Cookies.get("vote_coins");
+		if(coins) {
+			my_votes = new Votes(JSON.parse(coins));
+		}
 
 		$("#step3").show();
 		draw_characters();
@@ -127,6 +128,7 @@
 
 	socket.on("successful_send_vote", function() {
 		next_character();
+		draw_characters();
 	});
 
 	socket.on("refresh", function(characters_left) {
@@ -219,8 +221,6 @@
 
 	function draw_characters_step3() {
 
-		console.log(my_votes);
-
 		characters.forEach(function(character) {
 			
 			$("#character-" + character._id + " .character-image").css("background-image", "url(\"" + character.img + "\")");	
@@ -237,6 +237,8 @@
 				$("#character-" + character._id + " .character-complement").addClass("coin");
 				$("#character-" + character._id + " .character-complement").html(character_coin);
 			}
+			
+			if(my_votes.isCompleted()) $("#finish-button").removeClass("btn-disabled");
 
 		});
 
@@ -246,14 +248,9 @@
 		$(".coin").off("click");
 
 		$(".character").on("click", function() {
-
-			console.log(characters);
 			
 			var id = get_character_id_from_jquery_object($(this));
 			var character = get_character(id);
-
-			console.log(id);
-			console.log(character);
 
 			$(".modal-header").html("Elige la puntuación para " + character.name);
 
@@ -278,7 +275,6 @@
 				if(my_votes.isCompleted()) $("#finish-button").removeClass("btn-disabled");
 				else $("#finish-button").addClass("btn-disabled");
 
-				Cookies.set("vote_current_character", JSON.stringify(current_character), {expires: 1});
 				Cookies.set("vote_coins", JSON.stringify(my_votes), {expires: 1});
 
 				draw_characters();
@@ -302,14 +298,17 @@
 
 	function next_character() {
 		if(my_characters.length > 0) {
+			Cookies.set("vote_selected_characters", JSON.stringify(my_characters), {expires: 1});
 			current_character = get_character(my_characters.shift());
 			set_available_coins();
-			draw_characters();
+			my_votes = new Votes();
+			emitted = false;
 			return true;
 		} else {
 			$("#step3").hide();
 			$("#step4").show();
 			remove_cookies();
+			emitted = false;
 			return false;
 		}
 	}
@@ -325,7 +324,6 @@
 			}
 		});	
 
-		my_votes = new Votes();
 	}
 
 	function vote_start(code) {
@@ -346,13 +344,14 @@
 		if(emitted) return;
 		emitted = true;
 
-		socket.emit("send_vote", current_character, my_votes.parseToSend());
+		socket.emit("send_vote", current_character._id, my_votes.parseToSend());
 	}
 
 	function check_cookies() {
 
 		var code = Cookies.get('vote_code');
-		if(code) vote_start(code);
+		if(code && confirm("Hemos detectado que tenías una votación a medias. ¿Deseas continuarla?")) vote_start(code);
+		else remove_cookies();
 
 	}
 
@@ -386,7 +385,6 @@
 	function remove_cookies() {
 		Cookies.remove('vote_code');
 		Cookies.remove('vote_selected_characters');
-		Cookies.remove('vote_current_characters');
 		Cookies.remove('vote_coins');
 	}
 

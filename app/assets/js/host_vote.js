@@ -30,6 +30,12 @@
 
 	});
 
+	socket.on("refresh", function(characters_left, total_characters) {
+		console.log(characters_left);
+		console.log(total_characters);
+		drawCharactersLeft(characters_left, total_characters);
+	});
+
 	function drawCharactersLeft(characters_left, total_characters) {
 
 		$("#not_voted_title").html("Personajes que faltan por votar (" + characters_left.length + " / " + total_characters + "):");

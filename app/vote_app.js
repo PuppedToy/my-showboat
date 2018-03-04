@@ -49,7 +49,12 @@ module.exports = function(server, ticket_factory, vote_factory) {
 
 		socket.on('send_vote', function(character_id, votes) {
 
-			if(my_vote.addVote(character_id, votes)) socket.emit('successful_send_vote');
+			console.log("Guest " + my_guest.id + " has voted as character " + character_id + " with votes:");
+			console.log(votes);
+			if(my_vote.addVote(character_id, votes)) {
+				socket.emit('successful_send_vote');
+				my_vote.emit_host('refresh', my_vote.characters_left, my_vote.event.characters.length);
+			}
 			else fatal_error('Internal error when processing your vote.');
 
 		});
@@ -101,7 +106,7 @@ module.exports = function(server, ticket_factory, vote_factory) {
 					return;
 				}
 
-				var new_vote = vote_factory.newVote(event, user_found, ticket, socket);
+				var new_vote = vote_factory.newVote(event, user_found, ticket_factory.get_ticket(ticket), socket);
 				if(!new_vote) {
 					error("Could not create new vote for event " + event_id);
 					return;	
