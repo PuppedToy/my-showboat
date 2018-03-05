@@ -396,4 +396,8 @@
 		}, 5000);
 	}
 
+	function info(msg) {
+		
+	}
+
 })(jQuery);

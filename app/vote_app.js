@@ -16,7 +16,7 @@ module.exports = function(server, ticket_factory, vote_factory) {
 
 		socket.on('create_vote', function(user_id, ticket, event_id) {
 			createVote(user_id, ticket, event_id, function(new_vote) {
-				socket.emit('create_vote_response', new_vote.id, new_vote.characters_left, new_vote.event.characters.length);
+				socket.emit('create_vote_response', new_vote.id, new_vote.getNotFinishedCharacters(), new_vote.event.characters.length);
 				my_hosted_vote = new_vote;
 				console.log("A new vote with id \"" + new_vote.id + "\" has been created!");
 			});
@@ -53,7 +53,7 @@ module.exports = function(server, ticket_factory, vote_factory) {
 			console.log(votes);
 			if(my_vote.addVote(character_id, votes)) {
 				socket.emit('successful_send_vote');
-				my_vote.emit_host('refresh', my_vote.characters_left, my_vote.event.characters.length);
+				my_vote.emit_host('refresh', my_vote.getNotFinishedCharacters(), my_vote.event.characters.length);
 			}
 			else fatal_error('Internal error when processing your vote.');
 
