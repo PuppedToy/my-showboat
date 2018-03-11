@@ -1,6 +1,6 @@
 (function($) {
 
-	var ticket, current_event, user_id, characters, selected_character;
+	var ticket, current_event, user_id, characters, selected_character, event;
 
 	$(document).ready(function() {
 		checkConnection(function(response) {
@@ -19,7 +19,8 @@
 				dataType: "json",
 				success: function(response){
 				
-					$("#event_name").val(response.name);
+					event = response;
+					console.log(event);
 
 				},
 				error: function(response) {
@@ -34,6 +35,8 @@
 					$(".list").css("background-image", "none");
 				}
 			});
+
+			$("select").html("<option>Upload image</option><option>Image from link</option><option>Color</option>");
 
 			$("#prev_arrow").on("click", function() {
 				window.location.href = "/edit_event?step=3";

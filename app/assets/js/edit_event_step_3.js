@@ -48,6 +48,10 @@
 				window.location.href = "/edit_event?step=2";
 			});
 
+			$("#next_arrow").on("click", function() {
+				window.location.href = "/edit_event?step=4";
+			});
+
 		}, function() {
 			disconnect();
 		});
