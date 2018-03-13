@@ -62,7 +62,7 @@
 						<p>Cell background: <select class="bg-select"></select> <div class="bg-select-target"></div></p>
 					</div>
 				</div>
-				<p class="buttons"><button class='btn btn-font-sm'>Preview</button><button class='btn btn-font-sm'>Save</button></p>
+				<p class="buttons"><button class='btn btn-font-sm' data-toggle="modal" data-target="#modalPreview">Preview</button><button class='btn btn-font-sm'>Save</button></p>
 			</div>
 			<div id="next_arrow" class="col-1 col-xs-1 height100 aligner hidden">
 				<img class="width100 btn" src="./assets/images/next.png">
@@ -70,7 +70,24 @@
 		</div>
 	</div>
 
-	<!-- Modal -->
+	<!-- Modals -->
+	<div class="modal fade" id="modalPreview" role="dialog">
+		<div class="modal-dialog modal-preview">
+
+			<!-- Modal content-->
+			<div class="modal-content modal-choose-coins">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title">Preview</h4>
+				</div>
+				<div class="modal-body preview-body">
+					<!-- TODO -->
+				</div>
+			</div>
+
+		</div>
+	</div>
+
 	<div class="modal fade" id="modalExtlink" role="dialog">
 		<div class="modal-dialog">
 

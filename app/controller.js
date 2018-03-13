@@ -13,6 +13,46 @@ var ticket_factory = new TicketFactory();
 var vote_factory = new VoteFactory();
 var isImage = require('is-image');
 
+const default_template =  {
+	title: 'Resultados',
+	number_columns: 2,
+	number_characters: 20,
+	winner: {
+		text_color: '#868A08',
+		border_color: '#868A08',
+		border_opacity: 1	
+	},
+	runnerup: {
+		text_color: '#848484',
+		border_color: '#848484',
+		border_opacity: 1	
+	},
+	third: {
+		text_color: '#8A4B08',
+		border_color: '#8A4B08',
+		border_opacity: 1	
+	},
+	rest: {
+		text_color: '#000000',
+		border_color: '#000000',
+		border_opacity: 1	
+	},
+	background: {
+		type: 'color',
+		link: null,
+		color: '#FFF1CC'
+	},
+	row: {
+		border_color: '#000000',
+		border_opacity: 1,
+		background: {
+			type: 'color',
+			link: null,
+			color: '#6F5839'
+		}
+	}
+};
+
 // TODO Clean up this code please. It's messy as hell
 
 function Controller(url, cb) {
@@ -328,7 +368,7 @@ Controller.prototype.create_event = function(request, response) {
 		if(!user_found.events) user_found.events = [];
 		var new_id = 1;
 		if(user_found.events.length > 0) new_id = user_found.events[user_found.events.length - 1]._id + 1;
-		var new_event = {_id: new_id, name: "My Event " + new_id};
+		var new_event = {_id: new_id, name: "My Event " + new_id, template: default_template};
 		user_found.events.push(new_event);
 
 		db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {

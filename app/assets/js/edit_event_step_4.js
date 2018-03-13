@@ -32,7 +32,6 @@
 						alert("Internal server error. Please, contact the adminsitrator or try it later");
 						disconnect();
 					}
-					$(".list").css("background-image", "none");
 				}
 			});
 

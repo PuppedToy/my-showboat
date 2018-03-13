@@ -401,7 +401,7 @@ $theme_color_6: #6F522D;
 		border-width: 2px;
 		border-color: $theme_color_1;
 		overflow-y: auto;
-		height: 75%;
+		height: 70%;
 		margin-bottom: 2%;
 		margin-top: 2%;
 		font-size: 18px;
@@ -558,6 +558,15 @@ $theme_color_6: #6F522D;
 		overflow-y: auto;
 	}
 
+}
+
+.modal-preview {
+	height: 95%;
+	width: 98%;
+
+	.modal-body {
+		height: 100%;
+	}
 }
 
 .coin {
