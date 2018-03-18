@@ -41,6 +41,10 @@
 				window.location.href = "/edit_event?step=3";
 			});
 
+			$("#bg-select").on("change", function() {
+				
+			});
+
 			$(".settings-save-btn").on("click", function() {
 
 				if(!$("#event_name").val()) {
