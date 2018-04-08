@@ -34,32 +34,42 @@
 				<div class="width100 template_settings">
 					<div class="alert alert-danger error">Error</div>
 					<div class="alert alert-success success">Success</div>
-					<p><h2>1. Title: <input type="text" id="event_name"> </h2></p>
+					<p><h2>1. Title: <input type="text" id="title"> </h2></p>
 					<div class="settings_group">
 						<h2>2. Distribution</h2>
-						<p>Number of colums: <input type="number"></p>
-						<p>Number of displayed characters: <input type="number"> / 999</p>
+						<p>Number of columns: <input min=1 max=4 type="number" id="number_columns"></p>
+						<p>Number of maximum displayed characters: <input type="number" id="number_characters"></p>
 					</div>
 					<div class="settings_group">
 						<h2>3. Text color</h2>
-						<p>Winner text color: <input type="color"></p>
-						<p>Runner-up text color: <input type="color"></p>
-						<p>Third text color: <input type="color"></p>
-						<p>The rest text color: <input type="color"></p>
+						<p>Winner text color: <input type="color" id="winner_text_color"></p>
+						<p>Runner-up text color: <input type="color" id="runnerup_text_color"></p>
+						<p>Third text color: <input type="color" id="third_text_color"></p>
+						<p>The rest text color: <input type="color" id="rest_text_color"></p>
 					</div>
 					<div class="settings_group">
 						<h2>4. Border color</h2>
-						<p>Row border color: <input type="color"> <span>Opacity: <input type="range" class="slider" min="0" max="100" value="100"></span></p>
-						<p>Winner border color: <input type="color"> <span>Opacity: <input type="range" class="slider" min="0" max="100" value="100"></span></p>
-						<p>Runner-up border color: <input type="color"> <span>Opacity: <input type="range" class="slider" min="0" max="100" value="100"></span></p>
-						<p>Third border color: <input type="color"> <span>Opacity: <input type="range" class="slider" min="0" max="100" value="100"></span></p>
-						<p>The rest border color: <input type="color"> <span>Opacity: <input type="range" class="slider" min="0" max="100" value="100"></span></p>
+						<p>Row border color: <input type="color" id="row_border_color"> <span>Enable border: <input type="checkbox" min="0" max="100" value="100" id="row_border_opacity"></span></p>
+						<p>Winner border color: <input type="color" id="winner_border_color"> <span>Enable border: <input type="checkbox" min="0" max="100" value="100" id="winner_border_opacity"></span></p>
+						<p>Runner-up border color: <input type="color" id="runnerup_border_color"> <span>Enable border: <input type="checkbox" min="0" max="100" value="100" id="runnerup_border_opacity"></span></p>
+						<p>Third border color: <input type="color" id="third_border_color"> <span>Enable border: <input type="checkbox" min="0" max="100" value="100" id="third_border_opacity"></span></p>
+						<p>The rest border color: <input type="color" id="rest_border_color"> <span>Enable border: <input type="checkbox" min="0" max="100" value="100" id="rest_border_opacity"></span></p>
 					</div>
 					<div class="settings_group">
 						<h2>5. Background</h2>
-						<p>General background: <select id="bg-select-1" class="bg-select"></select> <div id="bg-select-target-1" class="bg-select-target"></div></p>
-						<p>Row background: <select id="bg-select-2" class="bg-select"></select> <div id="bg-select-target-2" class="bg-select-target"></div></p>
-						<p>Cell background: <select id="bg-select-3" class="bg-select"></select> <div id="bg-select-target-3" class="bg-select-target"></div></p>
+						<p>Background color: <input type="color" id="background_color"> This color will </p>
+						<div>Background image: 
+							<div class="character_picture" style="margin: 5px">
+								<img id="background_picture" class="hw100">
+							</div>
+							<form method='post' encType="multipart/form-data">
+								<input class="file_selector" type="file" id="uploadedFile" name="uploadedFile" accept="image/x-png,image/gif,image/jpeg" />
+					        	<label for='uploadedFile' class='btn btn-font-xs disablable' id='uploadedFileLabel'>Upload</label> 
+					        	<label id="modalExtLinkButton" class='btn btn-font-xs disablable' data-toggle="modal" data-target="#modalExtlink">Use external link</label> 
+					        	<label class='btn btn-font-xs' id="removeImageButton">Remove</label>
+					        </form>
+					        
+					    </div>
 					</div>
 				</div>
 				<p class="buttons"><button class='btn btn-font-sm' data-toggle="modal" data-target="#modalPreview">Preview</button><button class='btn btn-font-sm'>Save</button></p>

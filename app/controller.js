@@ -20,7 +20,7 @@ const default_template =  {
 	winner: {
 		text_color: '#868A08',
 		border_color: '#868A08',
-		border_opacity: 1	
+		border_opacity: 1
 	},
 	runnerup: {
 		text_color: '#848484',
@@ -534,6 +534,37 @@ Controller.prototype.upload_link_image = function(request, response) {
 
 }
 
+Controller.prototype.remove_template_image = function(request, response) {
+	
+	authenticateWithTicket(request, response, function(db, client, user_found) {
+
+		var event_found = tools.searchEvent(user_found, request.params.eventId);
+
+		if(!event_found) {
+			responses.not_found(response, "Event requested has not been found");
+			client.close();
+			return;
+		}
+
+		if(!deleteImageTemplate(event_found.template, response, client)) return;
+		event_found.template.background.link = "";
+
+		db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
+			if(err) {
+				console.log(err);
+				responses.database_error(response);
+				client.close();
+				return;		
+			}
+
+			responses.ok(response, event_found);
+			client.close();
+		});
+
+	});
+
+}
+
 Controller.prototype.upload_image = function(request, response) {
 
 	authenticateWithTicket(request, response, function(db, client, user_found) {
@@ -570,7 +601,6 @@ Controller.prototype.upload_image = function(request, response) {
 
 		var image_name = request.params.userId + "-" + request.params.eventId + "-" + character_found._id + "-" + parseInt(Math.random()*35000) + ".png";
 		var image_path = path.join(path.resolve('./public/assets/custom_images/'), image_name);
-		console.log(image_path);
 		var image_uri = '/assets/custom_images/' + image_name;
 
 		if(!deleteImage(character_found, response, client)) return;
@@ -597,6 +627,105 @@ Controller.prototype.upload_image = function(request, response) {
 				client.close();
 			});
 		});
+	});
+
+}
+
+Controller.prototype.upload_link_template_image = function(request, response) {
+
+	authenticateWithTicket(request, response, function(db, client, user_found) {
+
+		var event_found = tools.searchEvent(user_found, request.params.eventId);
+
+		if(!event_found) {
+			responses.not_found(response, "Event requested has not been found");
+			client.close();
+			return;
+		}
+
+		var new_link = request.body.new_link;
+
+		if(!new_link) {
+			responses.bad_request(response, "Missing \"new_link\"");
+			client.close();
+			return;
+		}
+
+		if(!deleteImageTemplate(event_found.template, response, client)) return;
+
+		event_found.template.background.link = new_link;
+
+		db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
+			if(err) {
+				console.log(err);
+				responses.database_error(response);
+				client.close();
+				return;		
+			}
+
+			responses.ok(response, event_found);
+			client.close();
+		});
+
+	});
+
+}
+
+Controller.prototype.upload_template_image = function(request, response) {
+
+	authenticateWithTicket(request, response, function(db, client, user_found) {
+
+		var event_found = tools.searchEvent(user_found, request.params.eventId);
+
+		if(!event_found) {
+			responses.not_found(response, "Event requested has not been found");
+			client.close();
+			return;
+		}
+
+		if(!request.files || !request.files.uploadedFile) {
+			responses.bad_request(response, 'No files were uploaded.');
+			client.close();
+			return;
+		}
+
+		var uploadedFile = request.files.uploadedFile;
+
+		if(!isImage(uploadedFile.name)) { // Dunno if this works
+			responses.bad_request(response, 'The file uploaded is not an image.');
+			client.close();
+			return;
+		}
+
+		var image_name = "template-" + request.params.eventId + "-" + parseInt(Math.random()*35000) + ".png";
+		var image_path = path.join(path.resolve('./public/assets/custom_images/'), image_name);
+		var image_uri = '/assets/custom_images/' + image_name;
+
+		if(!deleteImageTemplate(event_found.template, response, client)) return;
+
+		uploadedFile.mv(image_path, function(err) {
+		    if (err) {
+		  		console.log(err);
+				responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
+				client.close();
+				return;
+		    }
+
+		    event_found.template.background.link = image_uri;
+
+		    db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
+				if(err) {
+					console.log(err);
+					responses.database_error(response);
+					client.close();
+					return;		
+				}
+
+				responses.ok(response, event_found);
+				client.close();
+			});
+		});
+
 	});
 
 }
@@ -698,6 +827,35 @@ function deleteImage(character, response, client) {
 		try {
 			fs.unlinkSync(character.img.replace('/assets/custom_images', path.resolve('./public/assets/custom_images')));
 			character.img = "/assets/images/man-1.png";			
+			return true;
+		} catch (err) {
+			console.log(err);
+			responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
+			client.close();
+			character.img = "/assets/images/man-1.png";			
+			return false;
+		}
+	} 
+
+	return true;
+}
+
+function deleteImageTemplate(template, response, client) {
+
+	if(template.background.link && template.background.link.indexOf('/assets/custom_images') === 0) {
+		try {
+			fs.ensureDirSync("./public/assets/custom_images");
+		} catch(err) {
+			console.log(err);
+			responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
+			client.close();
+			character.img = "/assets/images/man-1.png";			
+			return false;
+		}
+
+		try {
+			fs.unlinkSync(template.background.link.replace('/assets/custom_images', path.resolve('./public/assets/custom_images')));
+			template.background.link = "";			
 			return true;
 		} catch (err) {
 			console.log(err);
