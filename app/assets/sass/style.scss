@@ -561,11 +561,57 @@ $theme_color_6: #6F522D;
 }
 
 .modal-preview {
-	height: 95%;
+	height: 88%;
 	width: 98%;
 
 	.modal-body {
 		height: 100%;
+	}
+}
+
+.preview-body {
+
+	height: 100%;
+	width: 100%;
+	background-repeat: no-repeat !important;
+	background-size: cover !important;
+
+	.preview-title {
+		height: 10%;
+		width: 100%;
+		font-size: 4em;
+		text-align: center;
+	}
+
+	.preview-scores {
+		height: 89%;
+		width: 100%;
+		text-align: center;
+
+		.preview-column {
+			height: 96%;
+			display: inline-block;
+			margin-top: 2%;
+			margin-left: 5px;
+			margin-right: 5px;
+
+			.preview-character {
+
+				font-size: 3em;
+				margin-bottom: 5px;
+				text-align: left;
+
+				.preview-image {
+					height: 100px;
+					width: 100px;
+					border-radius: 20%;
+					margin-right: 20px;
+				}
+
+			}
+
+		}
+
 	}
 }
 

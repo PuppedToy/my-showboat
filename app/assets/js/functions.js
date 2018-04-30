@@ -66,3 +66,14 @@ function randomInt(min, max) {
 function sample(array) {
 	return array[parseInt(Math.random()*array.length)];
 }
+
+function shuffle(array) {
+	var res = array.slice();
+	for(var i = 0; i < res.length; i++) {
+		var rnd = randomInt(0, array.length-1);
+		var aux = res[rnd];
+		res[rnd] = res[i];
+		res[i] = aux;
+	}
+	return res;
+}

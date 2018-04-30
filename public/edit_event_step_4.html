@@ -49,15 +49,15 @@
 					</div>
 					<div class="settings_group">
 						<h2>4. Border color</h2>
-						<p>Row border color: <input type="color" id="row_border_color"> <span>Enable border: <input type="checkbox" min="0" max="100" value="100" id="row_border_opacity"></span></p>
-						<p>Winner border color: <input type="color" id="winner_border_color"> <span>Enable border: <input type="checkbox" min="0" max="100" value="100" id="winner_border_opacity"></span></p>
-						<p>Runner-up border color: <input type="color" id="runnerup_border_color"> <span>Enable border: <input type="checkbox" min="0" max="100" value="100" id="runnerup_border_opacity"></span></p>
-						<p>Third border color: <input type="color" id="third_border_color"> <span>Enable border: <input type="checkbox" min="0" max="100" value="100" id="third_border_opacity"></span></p>
-						<p>The rest border color: <input type="color" id="rest_border_color"> <span>Enable border: <input type="checkbox" min="0" max="100" value="100" id="rest_border_opacity"></span></p>
+						<p>Row border color: <input type="color" id="row_border_color"> <span>Enable border: <input type="checkbox" id="row_border_opacity"></span></p>
+						<p>Winner border color: <input type="color" id="winner_border_color"> <span>Enable border: <input type="checkbox" id="winner_border_opacity"></span></p>
+						<p>Runner-up border color: <input type="color" id="runnerup_border_color"> <span>Enable border: <input type="checkbox" id="runnerup_border_opacity"></span></p>
+						<p>Third border color: <input type="color" id="third_border_color"> <span>Enable border: <input type="checkbox" id="third_border_opacity"></span></p>
+						<p>The rest border color: <input type="color" id="rest_border_color"> <span>Enable border: <input type="checkbox" id="rest_border_opacity"></span></p>
 					</div>
 					<div class="settings_group">
 						<h2>5. Background</h2>
-						<p>Background color: <input type="color" id="background_color"> This color will </p>
+						<p>Background color: <input type="color" id="background_color"></p>
 						<div>Background image: 
 							<div class="character_picture" style="margin: 5px">
 								<img id="background_picture" class="hw100">
@@ -72,7 +72,7 @@
 					    </div>
 					</div>
 				</div>
-				<p class="buttons"><button class='btn btn-font-sm' data-toggle="modal" data-target="#modalPreview">Preview</button><button class='btn btn-font-sm'>Save</button></p>
+				<p class="buttons"><button class='btn btn-font-sm' id="btn-preview" data-toggle="modal" data-target="#modalPreview">Preview</button><button class='btn btn-font-sm' id="btn-save">Save</button></p>
 			</div>
 			<div id="next_arrow" class="col-1 col-xs-1 height100 aligner hidden">
 				<img class="width100 btn" src="./assets/images/next.png">
@@ -91,7 +91,8 @@
 					<h4 class="modal-title">Preview</h4>
 				</div>
 				<div class="modal-body preview-body">
-					<!-- TODO -->
+					<div class="preview-title"></div>
+					<div class="preview-scores"></div>
 				</div>
 			</div>
 
