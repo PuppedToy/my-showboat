@@ -37,26 +37,18 @@
 					<p><h2>1. Title: <input type="text" id="title"> </h2></p>
 					<div class="settings_group">
 						<h2>2. Distribution</h2>
-						<p>Number of columns: <input min=1 max=4 type="number" id="number_columns"></p>
 						<p>Number of maximum displayed characters: <input type="number" id="number_characters"></p>
 					</div>
 					<div class="settings_group">
-						<h2>3. Text color</h2>
-						<p>Winner text color: <input type="color" id="winner_text_color"></p>
-						<p>Runner-up text color: <input type="color" id="runnerup_text_color"></p>
-						<p>Third text color: <input type="color" id="third_text_color"></p>
-						<p>The rest text color: <input type="color" id="rest_text_color"></p>
+						<h2>3. Colors</h2>
+						<p>Winner color: <input type="color" id="winner_color"> <span>Enable border: <input type="checkbox" id="winner_border_opacity"></span></p>
+						<p>Runner-up color: <input type="color" id="runnerup_color"> <span>Enable border: <input type="checkbox" id="runnerup_border_opacity"></span></p>
+						<p>Third color: <input type="color" id="third_color"> <span>Enable border: <input type="checkbox" id="third_border_opacity"></span></p>
+						<p>Present character color: <input type="color" id="present_color"> <span>Enable border: <input type="checkbox" id="present_border_opacity"></span></p>
+						<p>The rest border color: <input type="color" id="rest_color"> <span>Enable border: <input type="checkbox" id="rest_border_opacity"></span></p>
 					</div>
 					<div class="settings_group">
-						<h2>4. Border color</h2>
-						<p>Row border color: <input type="color" id="row_border_color"> <span>Enable border: <input type="checkbox" id="row_border_opacity"></span></p>
-						<p>Winner border color: <input type="color" id="winner_border_color"> <span>Enable border: <input type="checkbox" id="winner_border_opacity"></span></p>
-						<p>Runner-up border color: <input type="color" id="runnerup_border_color"> <span>Enable border: <input type="checkbox" id="runnerup_border_opacity"></span></p>
-						<p>Third border color: <input type="color" id="third_border_color"> <span>Enable border: <input type="checkbox" id="third_border_opacity"></span></p>
-						<p>The rest border color: <input type="color" id="rest_border_color"> <span>Enable border: <input type="checkbox" id="rest_border_opacity"></span></p>
-					</div>
-					<div class="settings_group">
-						<h2>5. Background</h2>
+						<h2>4. Background</h2>
 						<p>Background color: <input type="color" id="background_color"></p>
 						<div>Background image: 
 							<div class="character_picture" style="margin: 5px">
@@ -68,7 +60,13 @@
 					        	<label id="modalExtLinkButton" class='btn btn-font-xs disablable' data-toggle="modal" data-target="#modalExtlink">Use external link</label> 
 					        	<label class='btn btn-font-xs' id="removeImageButton">Remove</label>
 					        </form>
-					        
+							<div style="margin-top: 20px;">
+								<p>Background image style:</p>
+								<p><input type="radio" id="background_repeat" name="background_type" value="repeat"> Keep the size and repeat background over the screen</p>
+								<p><input type="radio" id="background_cover" name="background_type" value="cover"> Keep the size and cut the image to fit the background</p>
+								<p><input type="radio" id="background_contain" name="background_type" value="contain"> Keep the size and do not cut the image</p>
+								<p><input type="radio" id="background_no_repeat" name="background_type" value="no_repeat"> Do not keep the size and cover all the background</p>
+							</div>
 					    </div>
 					</div>
 				</div>
@@ -92,7 +90,10 @@
 				</div>
 				<div class="modal-body preview-body">
 					<div class="preview-title"></div>
-					<div class="preview-scores"></div>
+					<div class="preview-scores">
+						<div class="preview-column" id="preview-column-1"></div>
+						<div class="preview-column" id="preview-column-2"></div>
+					</div>
 				</div>
 			</div>
 

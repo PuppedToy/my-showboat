@@ -150,15 +150,15 @@
 
 			});
 
-			$("#btn-save").on("click", function() {
+			$("#modalPreview").on("shown.bs.modal", function() {
 
-				buildJSON();
+				preview();
 
 			});
 
-			$("#btn-preview").on("click", function() {
+			$("#btn-save").on("click", function() {
 
-				preview();
+				buildJSON(true);
 
 			});
 
@@ -168,30 +168,32 @@
 	});
 
 	function applyTemplate() {
+
+		var template_categories = ["winner", "runnerup", "third", "present", "rest", "background"];
+		template_categories.forEach(function(category) {
+			if(!(category in template)) template[category] = {};
+		});
+
 		$("#title").val(template.title);
-		$("#number_columns").val(template.number_columns);
 		$("#number_characters").val(template.number_characters);
-		$("#winner_text_color").val(template.winner.text_color);
-		$("#winner_border_color").val(template.winner.border_color);
+		$("#winner_color").val(template.winner.color);
 		setChecked($("#winner_border_opacity"), template.winner.border_opacity);
-		$("#runnerup_text_color").val(template.runnerup.text_color);
-		$("#runnerup_border_color").val(template.runnerup.border_color);
+		$("#runnerup_color").val(template.runnerup.color);
 		setChecked($("#runnerup_border_opacity"), template.runnerup.border_opacity);
-		$("#third_text_color").val(template.third.text_color);
-		$("#third_border_color").val(template.third.border_color);
+		$("#third_color").val(template.third.color);
 		setChecked($("#third_border_opacity"), template.third.border_opacity);
-		$("#rest_text_color").val(template.rest.text_color);
-		$("#rest_border_color").val(template.rest.border_color);
+		$("#present_color").val(template.present.color);
+		setChecked($("#present_border_opacity"), template.present.border_opacity);
+		$("#rest_color").val(template.rest.color);
 		setChecked($("#rest_border_opacity"), template.rest.border_opacity);
-		$("#row_text_color").val(template.row.text_color);
-		$("#row_border_color").val(template.row.border_color);
-		setChecked($("#row_border_opacity"), template.row.border_opacity);
 		$("#background_color").val(template.background.color);
 		if(event.template.background.link) $("#background_picture").attr("src", event.template.background.link);
 		else $("#background_picture").removeAttr("src");
+		if("type" in template.background) $("#background_" + template.background.type).attr("checked", "checked");
+
 	}
 
-	function buildJSON() {
+	function buildJSON(save) {
 		console.log("Template:");
 		console.log(template);
 		var result = {
@@ -199,38 +201,58 @@
 			number_columns: $("#number_columns").val(),
 			number_characters: $("#number_characters").val(),
 			winner: {
-				text_color: $('#winner_text_color').val(),
-				border_color: $('#winner_border_color').val(),
+				color: $('#winner_color').val(),
 				border_opacity: isChecked($('#winner_border_opacity'))
 			},
 			runnerup: {
-				text_color: $('#runnerup_text_color').val(),
-				border_color: $('#runnerup_border_color').val(),
+				color: $('#runnerup_color').val(),
 				border_opacity: isChecked($('#runnerup_border_opacity'))
 			},
 			third: {
-				text_color: $('#third_text_color').val(),
-				border_color: $('#third_border_color').val(),
+				color: $('#third_color').val(),
 				border_opacity: isChecked($('#third_border_opacity'))	
 			},
+			present: {
+				color: $('#present_color').val(),
+				border_opacity: isChecked($('#present_border_opacity'))	
+			},
 			rest: {
-				text_color: $('#rest_text_color').val(),
-				border_color: $('#rest_border_color').val(),
+				color: $('#rest_color').val(),
 				border_opacity: isChecked($('#rest_border_opacity'))	
 			},
 			background: {
 				color: $("#background_color").val(),
+				type: $("input:radio[name ='background_type']:checked").val(),
 				link: template.background.link
-			},
-			row: {
-				border_color: $('#row_border_color').val(),
-				border_opacity: isChecked($('#row_border_opacity'))
 			}
 		};
 		console.log("Result:");
 		console.log(result);
 
 		template = result;
+
+		if(save) {
+			$.ajax({
+				type: "PUT",
+				url: "/api/users/" + user_id + "/events/" + current_event,
+				data: JSON.stringify({ ticket: ticket, update: {template: template} }),
+				contentType: "application/json; charset=utf-8",
+				dataType: "html",
+				success: function(response) {
+					// OK!
+				},
+				error: function(response) {
+					if(response.status == 401) {
+						// unauthorized
+						alert("Connection lost. Please, log in again");
+					} else {
+						alert("Internal server error. Please, contact the adminsitrator or try it later");
+					}
+					disconnect();
+				}
+			});
+		}
+
 	}
 
 	function isChecked($item) {
@@ -256,45 +278,131 @@
 
 	function preview() {
 
-		$(".preview-scores").html("");
+		buildJSON(false);
 
-		template.number_columns = Math.min(template.number_columns, 4);
+		$(".preview-column").html("");
 
-		var $preview = $(".preview-body");
-		var shuffled_characters = shuffle(characters);
+		var shuffled_characters = characters.slice();
+		shuffled_characters.forEach(function(character) {
+			character.score = randomInt(0, 200);
+		});
+		shuffled_characters.sort(function(c1, c2) {
+			return c2.score - c1.score;
+		});
 
-		console.log(template.background.color);
+		var present_character = randomInt(1, shuffled_characters.length);
+		var $body = $(".preview-body").first();
 
-		if(template.background.link) $preview.css("background", "url(" + template.background.link + ")")
-		else $preview.css("background-color", template.background.color);
-
-		$(".preview-title").html(template.title);
-
-		var column_width = 48;
-		column_width = parseInt(50/template.number_columns);
-		column_width += "%";
-
-		var number_characters = Math.min(template.number_characters, characters.length);
-		var columns = [];
-
-		for(var i = 0; i < template.number_columns; i++) {
-			columns.push([]);
-		}
-		var i = 0;
-		while(shuffled_characters.length > 0) {
-			columns[i].push(shuffled_characters.shift());
-			i = (i+1)%template.number_columns;
-		}
-
-		for(var i = 0; i < template.number_columns; i++) {
-			$(".preview-scores").append("<div class='preview-column' id='preview-column-" + i + "'></div>");
-			for(var j = 0; j < columns[i].length; j++) {
-				$("#preview-column-" + i).append("<div class='preview-character'><img class='preview-image' src='" + 
-					columns[i][j].img + "'>" + columns[i][j].name + "</div>");
+		$body.css("background-color", template.background.color);
+		if(template.background.link) {
+			$body.css("background-image", "url(" + template.background.link + ")");
+			if(!("type" in template.background)) template.background.type = "cover";
+			console.log(template.background.type);
+			switch(template.background.type) {
+				case "repeat":
+					$body.css("background-repeat", "repeat");
+					$body.css("background-size", "auto");
+				break;
+				case "cover":
+					$body.css("background-repeat", "no-repeat");
+					$body.css("background-size", "cover");
+				break;
+				case "contain":
+					$body.css("background-repeat", "no-repeat");
+					$body.css("background-size", "contain");
+				break;
+				case "no_repeat":
+					$body.css("background-repeat", "no-repeat");
+					$body.css("background-size", "100% 100%");
+				break;
+				default:
+				break;
 			}
 		}
+		$(".preview-title").html(template.title);
 
-		$(".preview-column").css("width", column_width);
+		var number_characters = Math.min(template.number_characters, characters.length);
+
+		var pos = 1;
+
+		for(var i = 0; i < Math.min(number_characters, 3); i++) {
+			$("#preview-column-1").append(newPreviewElement(i));
+			$(".preview-image").last().css("background-image", "url(" + shuffled_characters[i].img + ")");
+		}
+
+		for(var i = 3; i < number_characters; i++) {
+			$("#preview-column-2").append(newPreviewElement(i));
+			$(".preview-image").last().css("background-image", "url(" + shuffled_characters[i].img + ")");
+		}
+
+		var winner_height = 34;
+		var runnerup_height = 30;
+		var third_height = 26;
+		var rest_height = Math.min(parseInt(95/(number_characters-3)), 18);
+		$(".preview-character").css("height", rest_height + "%");
+		$("#preview-character-1").css("height", winner_height + "%");
+		$("#preview-character-2").css("height", runnerup_height + "%");
+		$("#preview-character-3").css("height", third_height + "%");
+
+		$(".preview-character").css("font-size", Math.min(rest_height/3, 3) + "vh");
+		$("#preview-character-1").css("font-size", Math.min(winner_height/3, 3) + "vh");
+		$("#preview-character-2").css("font-size", Math.min(runnerup_height/3, 3) + "vh");
+		$("#preview-character-3").css("font-size", Math.min(third_height/3, 3) + "vh");
+
+		$(".preview-image-box").width($(".preview-image-box").last().height());
+		$("#preview-image-box-1").width($("#preview-image-box-1").height());
+		$("#preview-image-box-2").width($("#preview-image-box-2").height());
+		$("#preview-image-box-3").width($("#preview-image-box-3").height());
+
+
+		if(template.rest.border_opacity) {
+			$(".preview-image").css("border-style", "solid");
+			$(".preview-image").css("border-width", "1px");
+			$(".preview-image").css("border-color", template.rest.color);
+		}
+		if(template.winner.border_opacity) {
+			$("#preview-image-1").css("border-style", "solid");
+			$("#preview-image-1").css("border-width", "3px");
+			$("#preview-image-1").css("border-color", template.winner.color);
+		}
+		if(template.runnerup.border_opacity) {
+			$("#preview-image-2").css("border-style", "solid");
+			$("#preview-image-2").css("border-width", "3px");
+			$("#preview-image-2").css("border-color", template.runnerup.color);
+		}
+		if(template.third.border_opacity) {
+			$("#preview-image-3").css("border-style", "solid");
+			$("#preview-image-3").css("border-width", "2px");
+			$("#preview-image-3").css("border-color", template.third.color);
+		}
+		if(template.present.border_opacity) {
+			$("#preview-image-" + present_character).css("border-style", "solid");
+			$("#preview-image-" + present_character).css("border-width", "3px");
+			$("#preview-image-" + present_character).css("border-color", template.present.color);
+		}
+
+		$(".preview-character").css("color", template.rest.color);
+		$("#preview-character-1").css("color", template.winner.color);
+		$("#preview-character-2").css("color", template.runnerup.color);
+		$("#preview-character-3").css("color", template.third.color);
+		$("#preview-character-" + present_character).css("color", template.present.color);
+
+		function newPreviewElement(i) {
+			return (
+				"<div class='preview-character' id='preview-character-" + pos + "'>" + 
+					pos + ". <div class='preview-image-box' id='preview-image-box-" + pos + "'>" + 
+					 	"<div class='preview-image' id='preview-image-" + pos + "'></div>" + 
+					"</div>" + 
+				 	"<div class='preview-name' id='preview-name-" + pos + "'>" + 
+				 		shuffled_characters[i].name + 
+				 	"</div>" + 
+				 	"<div class='preview-char-score' id='preview-char-score-'" + 
+				 		(pos++) + "'>" + 
+				 		shuffled_characters[i].score + 
+				 	"</div>" + 
+				"</div>"
+			);
+		}
 
 	}
 
