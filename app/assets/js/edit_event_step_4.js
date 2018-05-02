@@ -63,6 +63,7 @@
 				    processData: false,
 				    success: function(response) {
 						event = response;
+						template = event.template;
 						if(event.template.background.link) $("#background_picture").attr("src", event.template.background.link);
 						else $("#background_picture").removeAttr("src");
 				    },
@@ -97,6 +98,7 @@
 					dataType: "json",
 				    success: function(response) {
 						event = response;
+						template = event.template;
 						if(event.template.background.link) $("#background_picture").attr("src", event.template.background.link);
 						else $("#background_picture").removeAttr("src");
 				    },
@@ -130,6 +132,8 @@
 					dataType: "json",
 				    success: function(response) {
 						event = response;
+						template = event.template;
+						console.log(event);
 						if(event.template.background.link) $("#background_picture").attr("src", event.template.background.link);
 						else $("#background_picture").removeAttr("src");
 				    },
@@ -319,6 +323,7 @@
 				break;
 			}
 		}
+		else $body.css("background-image", "none");
 		$(".preview-title").html(template.title);
 
 		var number_characters = Math.min(template.number_characters, characters.length);

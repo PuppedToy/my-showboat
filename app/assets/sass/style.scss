@@ -305,6 +305,8 @@ $theme_color_6: #6F522D;
 
 	&.vote {
 
+		padding-top: 15px;
+
 		.main_input {
 			font-size: 4em;
 			width: 80%;
@@ -365,6 +367,23 @@ $theme_color_6: #6F522D;
 		#step2, #step3 {
 			display: none;
 			height: 96%;
+
+			&.host {
+				text-align: center;
+				width: 100%;
+				padding-top: 50px;
+			}
+
+			.countdown_title {
+				font-size: 8vh;
+				width: 100%;
+				margin-bottom: 40px;
+			}
+
+			.countdown {
+				font-size: 30vh;
+				width: 100%;
+			}
 
 			.images-container {
 				width: 100%;
@@ -475,6 +494,20 @@ $theme_color_6: #6F522D;
 	#event_settings {
 		margin-top: 4%;
 		height: auto;
+	}
+
+}
+
+#step3.host {
+	display: none;
+	height: 100%;
+	width: 100%;
+
+	.preview-body {
+		padding-left: 20px;
+		padding-right: 20px;
+		padding-top: 10px;
+		padding-bottom: 10px;
 	}
 
 }

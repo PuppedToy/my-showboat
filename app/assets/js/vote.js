@@ -300,6 +300,7 @@
 		if(my_characters.length > 0) {
 			Cookies.set("vote_selected_characters", JSON.stringify(my_characters), {expires: 1});
 			current_character = get_character(my_characters.shift());
+			$("#title_step3").html("<strong>" + current_character.name + "</strong>, elige la puntuación para cada personaje.")
 			set_available_coins();
 			my_votes = new Votes();
 			emitted = false;

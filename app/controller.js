@@ -13,45 +13,35 @@ var ticket_factory = new TicketFactory();
 var vote_factory = new VoteFactory();
 var isImage = require('is-image');
 
-const default_template =  {
-	title: 'Resultados',
-	number_columns: 2,
-	number_characters: 20,
-	winner: {
-		text_color: '#868A08',
-		border_color: '#868A08',
-		border_opacity: 1
+const default_template = {
+	"title" : "Resultados",
+	"number_characters" : "20",
+	"winner" : {
+		"color" : "#c1b612",
+		"border_opacity" : true
 	},
-	runnerup: {
-		text_color: '#848484',
-		border_color: '#848484',
-		border_opacity: 1	
+	"runnerup" : {
+		"color" : "#6e6e6e",
+		"border_opacity" : true
 	},
-	third: {
-		text_color: '#8A4B08',
-		border_color: '#8A4B08',
-		border_opacity: 1	
+	"third" : { 
+		"color" : "#c96d00",
+		"border_opacity" : true
 	},
-	rest: {
-		text_color: '#000000',
-		border_color: '#000000',
-		border_opacity: 1	
+	"present" : {
+		"color" : "#1200ff",
+		"border_opacity" : true
 	},
-	background: {
-		type: 'color',
-		link: null,
-		color: '#FFF1CC'
+	"rest" : {
+		"color" : "#000000",
+		"border_opacity" : true
 	},
-	row: {
-		border_color: '#000000',
-		border_opacity: 1,
-		background: {
-			type: 'color',
-			link: null,
-			color: '#6F5839'
-		}
+	"background" : {
+		"color" : "#fff1cc",
+		"type" : "cover",
+		"link" : ""
 	}
-};
+}
 
 // TODO Clean up this code please. It's messy as hell
 
@@ -278,7 +268,7 @@ Controller.prototype.user_login = function(request, response) {
 			if(err) {
 				console.log(err);
 				responses.database_error(response);
-				return;		
+				return;     
 			}
 
 			if(!user_found) {
@@ -377,7 +367,7 @@ Controller.prototype.create_event = function(request, response) {
 				console.log(err);
 				responses.database_error(response);
 				client.close();
-				return;		
+				return;     
 			} else {
 				responses.created(response, {id: new_event._id, name: new_event.name});
 				client.close();
@@ -428,7 +418,7 @@ Controller.prototype.edit_event = function(request, response) {
 					console.log(err);
 					responses.database_error(response);
 					client.close();
-					return;		
+					return;     
 				}
 
 				responses.ok(response);
@@ -480,7 +470,7 @@ Controller.prototype.delete_event = function(request, response) {
 		} else {
 			responses.not_found(response, "Event requested has not been found");
 			client.close();
-		}		
+		}       
 
 	});
 
@@ -523,7 +513,7 @@ Controller.prototype.upload_link_image = function(request, response) {
 				console.log(err);
 				responses.database_error(response);
 				client.close();
-				return;		
+				return;     
 			}
 
 			responses.ok(response, event_found);
@@ -554,7 +544,7 @@ Controller.prototype.remove_template_image = function(request, response) {
 				console.log(err);
 				responses.database_error(response);
 				client.close();
-				return;		
+				return;     
 			}
 
 			responses.ok(response, event_found);
@@ -606,21 +596,21 @@ Controller.prototype.upload_image = function(request, response) {
 		if(!deleteImage(character_found, response, client)) return;
 
 		uploadedFile.mv(image_path, function(err) {
-		    if (err) {
-		  		console.log(err);
+			if (err) {
+				console.log(err);
 				responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
 				client.close();
 				return;
-		    }
+			}
 
-		    character_found.img = image_uri;
+			character_found.img = image_uri;
 
-		    db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
+			db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
 				if(err) {
 					console.log(err);
 					responses.database_error(response);
 					client.close();
-					return;		
+					return;     
 				}
 
 				responses.ok(response, event_found);
@@ -660,7 +650,7 @@ Controller.prototype.upload_link_template_image = function(request, response) {
 				console.log(err);
 				responses.database_error(response);
 				client.close();
-				return;		
+				return;     
 			}
 
 			responses.ok(response, event_found);
@@ -704,21 +694,21 @@ Controller.prototype.upload_template_image = function(request, response) {
 		if(!deleteImageTemplate(event_found.template, response, client)) return;
 
 		uploadedFile.mv(image_path, function(err) {
-		    if (err) {
-		  		console.log(err);
+			if (err) {
+				console.log(err);
 				responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
 				client.close();
 				return;
-		    }
+			}
 
-		    event_found.template.background.link = image_uri;
+			event_found.template.background.link = image_uri;
 
-		    db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
+			db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
 				if(err) {
 					console.log(err);
 					responses.database_error(response);
 					client.close();
-					return;		
+					return;     
 				}
 
 				responses.ok(response, event_found);
@@ -820,19 +810,19 @@ function deleteImage(character, response, client) {
 			console.log(err);
 			responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
 			client.close();
-			character.img = "/assets/images/man-1.png";			
+			character.img = "/assets/images/man-1.png";         
 			return false;
 		}
 
 		try {
 			fs.unlinkSync(character.img.replace('/assets/custom_images', path.resolve('./public/assets/custom_images')));
-			character.img = "/assets/images/man-1.png";			
+			character.img = "/assets/images/man-1.png";         
 			return true;
 		} catch (err) {
 			console.log(err);
 			responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
 			client.close();
-			character.img = "/assets/images/man-1.png";			
+			character.img = "/assets/images/man-1.png";         
 			return false;
 		}
 	} 
@@ -849,21 +839,16 @@ function deleteImageTemplate(template, response, client) {
 			console.log(err);
 			responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
 			client.close();
-			character.img = "/assets/images/man-1.png";			
 			return false;
 		}
 
 		try {
 			fs.unlinkSync(template.background.link.replace('/assets/custom_images', path.resolve('./public/assets/custom_images')));
-			template.background.link = "";			
-			return true;
 		} catch (err) {
 			console.log(err);
-			responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
-			client.close();
-			character.img = "/assets/images/man-1.png";			
-			return false;
 		}
+		
+		template.background.link = "";          
 	} 
 
 	return true;
@@ -894,8 +879,8 @@ function authenticateWithTicket(request, response, success_cb, error_cb) {
 			console.log(err);
 			responses.database_error(response);
 			if(error_cb) error_cb();
-			return;		
-		}		
+			return;     
+		}       
 
 		var db = client.db(config.mongo_name);
 
@@ -905,7 +890,7 @@ function authenticateWithTicket(request, response, success_cb, error_cb) {
 				responses.database_error(response);
 				client.close();
 				if(error_cb) error_cb();
-				return;		
+				return;     
 			}
 
 			if(!user_found) {
