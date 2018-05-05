@@ -3,6 +3,10 @@
 	var ticket, active_button = true;
 
 	$(document).ready(function() {
+		checkConnection(function() {
+			location.href = "/event_list";
+		});
+
 		$(".login-input").on("keyup", function(e) {
 			if(e.which === 13) login();
 		});
@@ -10,6 +14,7 @@
 		$(".signup-input").on("keyup", function(e) {
 			if(e.which === 13) signup();
 		});
+
 
 		$("#tab-login").on("click", function() {
 			$("#log_name").val($("#sign_name").val());

@@ -34,13 +34,22 @@
 				<div class="width100 template_settings">
 					<div class="alert alert-danger error">Error</div>
 					<div class="alert alert-success success">Success</div>
-					<p><h2>1. Title: <input type="text" id="title"> </h2></p>
+					<div class="settings_group">
+						<h2>1. Title</h2>
+						<p>Title while voting: <input type="text" id="title"></p>
+						<p>Title when finished: <input type="text" id="title_finished"></p>
+					</div>
 					<div class="settings_group">
 						<h2>2. Distribution</h2>
 						<p>Number of maximum displayed characters: <input type="number" id="number_characters"></p>
+						<p>Characters size:</p>
+						<p><input type="radio" id="distribution_type_equal" name="distribution_type" value="equal"> Every character has the same size.</p>
+						<p><input type="radio" id="distribution_type_different" name="distribution_type" value="different"> First, second and third positions are bigger than the others.</p>
+						<p><input type="radio" id="distribution_type_hybrid" name="distribution_type" value="hybrid" checked> Every character has the same size while voting. Once finished, first, second and third positions are bigger than the others.</p>
 					</div>
 					<div class="settings_group">
 						<h2>3. Colors</h2>
+						<p>Title color: <input type="color" id="title_color"></p>
 						<p>Winner color: <input type="color" id="winner_color"> <span>Enable border: <input type="checkbox" id="winner_border_opacity"></span></p>
 						<p>Runner-up color: <input type="color" id="runnerup_color"> <span>Enable border: <input type="checkbox" id="runnerup_border_opacity"></span></p>
 						<p>Third color: <input type="color" id="third_color"> <span>Enable border: <input type="checkbox" id="third_border_opacity"></span></p>

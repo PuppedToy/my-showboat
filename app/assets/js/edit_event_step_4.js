@@ -179,6 +179,8 @@
 		});
 
 		$("#title").val(template.title);
+		$("#title_finished").val(template.title_finished);
+		$("#title_color").val(template.title_color);
 		$("#number_characters").val(template.number_characters);
 		$("#winner_color").val(template.winner.color);
 		setChecked($("#winner_border_opacity"), template.winner.border_opacity);
@@ -194,6 +196,7 @@
 		if(event.template.background.link) $("#background_picture").attr("src", event.template.background.link);
 		else $("#background_picture").removeAttr("src");
 		if("type" in template.background) $("#background_" + template.background.type).attr("checked", "checked");
+		if("distribution_type" in template) $("#distribution_type_" + template.distribution_type).attr("checked", "checked");
 
 	}
 
@@ -202,6 +205,9 @@
 		console.log(template);
 		var result = {
 			title: $("#title").val(),
+			title_finished: $("#title_finished").val(),
+			title_color: $("#title_color").val(),
+			distribution_type: $("input:radio[name ='distribution_type']:checked").val(),
 			number_columns: $("#number_columns").val(),
 			number_characters: $("#number_characters").val(),
 			winner: {
@@ -325,29 +331,46 @@
 		}
 		else $body.css("background-image", "none");
 		$(".preview-title").html(template.title);
+		$(".preview-title").css("color", template.title_color || "#000");
 
 		var number_characters = Math.min(template.number_characters, characters.length);
 
 		var pos = 1;
 
-		for(var i = 0; i < Math.min(number_characters, 3); i++) {
-			$("#preview-column-1").append(newPreviewElement(i));
-			$(".preview-image").last().css("background-image", "url(" + shuffled_characters[i].img + ")");
+		if(template.distribution_type == 'different') {
+			for(var i = 0; i < Math.min(number_characters, 3); i++) {
+				$("#preview-column-1").append(newPreviewElement(i));
+				$(".preview-image").last().css("background-image", "url(" + shuffled_characters[i].img + ")");
+			}
+
+			for(var i = 3; i < number_characters; i++) {
+				$("#preview-column-2").append(newPreviewElement(i));
+				$(".preview-image").last().css("background-image", "url(" + shuffled_characters[i].img + ")");
+			}
+
+			$("#preview-column-2").css("padding-top", "30px");
+
+			var rest_height = Math.min(parseInt(95/(number_characters-3)), 18);
+			var winner_height = 34;
+			var runnerup_height = 30;
+			var third_height = 26;
+			$(".preview-character").css("height", rest_height + "%");
+			$("#preview-character-1").css("height", winner_height + "%");
+			$("#preview-character-2").css("height", runnerup_height + "%");
+			$("#preview-character-3").css("height", third_height + "%");
+		} else {
+			$("#preview-column-2").css("padding-top", "0");
+			var column = 1;
+			for(var i = 0; i < number_characters; i++) {
+				if(i >= Math.ceil(number_characters/2)) column = 2;
+				$("#preview-column-" + column).append(newPreviewElement(i));
+				$(".preview-image").last().css("background-image", "url(" + shuffled_characters[i].img + ")");
+			}
+			var rest_height = Math.min(parseInt(95/Math.ceil(number_characters/2)), 18);
+			$(".preview-character").css("height", rest_height + "%");
 		}
 
-		for(var i = 3; i < number_characters; i++) {
-			$("#preview-column-2").append(newPreviewElement(i));
-			$(".preview-image").last().css("background-image", "url(" + shuffled_characters[i].img + ")");
-		}
-
-		var winner_height = 34;
-		var runnerup_height = 30;
-		var third_height = 26;
-		var rest_height = Math.min(parseInt(95/(number_characters-3)), 18);
-		$(".preview-character").css("height", rest_height + "%");
-		$("#preview-character-1").css("height", winner_height + "%");
-		$("#preview-character-2").css("height", runnerup_height + "%");
-		$("#preview-character-3").css("height", third_height + "%");
+		
 
 		$(".preview-character").css("font-size", Math.min(rest_height/3, 3) + "vh");
 		$("#preview-character-1").css("font-size", Math.min(winner_height/3, 3) + "vh");

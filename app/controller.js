@@ -15,6 +15,8 @@ var isImage = require('is-image');
 
 const default_template = {
 	"title" : "Resultados",
+	"title_color" : "#000000",
+	"distribution_type" : "hybrid",
 	"number_characters" : "20",
 	"winner" : {
 		"color" : "#c1b612",
