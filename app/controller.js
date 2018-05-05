@@ -58,12 +58,13 @@ Controller.prototype.getFactories = function(cb) {
 
 }
 
-
+/*
 Controller.prototype.render_index = function(request, response) {
 
 	response.sendFile( path.join( base_url, 'public', 'index.html' ) );
 
 }
+*/
 
 Controller.prototype.render_login = function(request, response) {
 

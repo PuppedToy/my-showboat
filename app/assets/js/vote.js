@@ -37,7 +37,7 @@
 
 		return null;
 
-	}
+	};
 
 	Votes.prototype.parseToSend = function() {
 
@@ -54,7 +54,7 @@
 
 		return result;
 
-	}
+	};
 
 	$(document).ready(function() {
 
@@ -199,7 +199,8 @@
 			else if(is_character_left(character._id, characters_left)) {
 				$("#character-" + character._id + " .character-image").css("background-image", "url(\"" + character.img + "\")");	
 			} else {
-				$("#character-" + character._id + " .character-image").css("background-image", "url(./assets/images/taken.png), url(" + character.img + ")");	
+				$("#character-" + character._id + " .character-image").css("background-image", "url(" + character.img + ")");	
+				$("#character-" + character._id).append("<div class='taken'></div>")
 				$("#character-" + character._id).addClass("character-disabled");
 			}
 			$("#character-" + character._id + " .character-name").html(character.name);
@@ -256,8 +257,14 @@
 
 			var modal_html = "";
 
-			available_coins.forEach(function(coin) {
+			var vote_keys = Object.keys(my_votes);
+
+			vote_keys.filter(function(key) { return my_votes[key] == null; }).forEach(function(coin) {
 				modal_html += "<div id='coin-" + coin + "' class='coin aligner'>" + coin + "</div>";
+			});
+			modal_html += "<div id='used_coins'>Puntuaciones que ya has utilizado</div>"
+			vote_keys.filter(function(key) { return my_votes[key] != null; }).forEach(function(coin) {
+				modal_html += "<div id='coin-" + coin + "' class='coin used aligner'>" + coin + "</div>";
 			});
 
 			$(".modal-body").html(modal_html);
