@@ -185,7 +185,7 @@ $theme_color_6: #6F522D;
 	}
 
 	.character_picture {
-		height: 200px;
+		height: 220px;
 		width: 200px;
 		border-style: outset;
 		border-width: 2px;
@@ -194,6 +194,9 @@ $theme_color_6: #6F522D;
 		margin-left: auto;
 		margin-top: 1%;
 		margin-bottom: 2%;
+		background-repeat: no-repeat;
+		background-size: cover;
+		background-position: center;
 	}
 
 	.file_selector {
@@ -524,6 +527,13 @@ $theme_color_6: #6F522D;
 		padding-right: 20px;
 		padding-top: 10px;
 		padding-bottom: 10px;
+		position: relative;
+
+		.adder {
+			position: absolute;
+			font-size: 4vh;
+		}
+
 	}
 
 }

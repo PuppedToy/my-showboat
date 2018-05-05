@@ -101,8 +101,7 @@
 				else return sample([-1, 1]);
 			});
 			present_character = get_character_position(next_score.character_id);
-			console.log(present_character);
-			preview();
+			preview(next_score.vote);
 		}, 4000);
 	}
 
@@ -120,7 +119,7 @@
 		return null;
 	}
 
-	function preview() {
+	function preview(vote) {
 
 		$(".main").css("padding", 0);
 
@@ -223,6 +222,23 @@
 		$("#preview-character-3").css("color", template.third.color);
 		$("#preview-character-" + present_character).css("color", template.present.color);
 
+		if(vote) {
+			var $adder = $("#adder");
+
+			$adder.css("opacity", "1");
+			$adder.css("color", template.present.color);
+			$adder.css("top", ($("#preview-char-score-" + present_character).offset().top - 40) + "px");
+			$adder.css("left", ($("#preview-char-score-" + present_character).offset().left - 20) + "px");
+
+			$adder.html("+ " + vote);
+
+			$adder.animate({
+				top: ($("#preview-char-score-" + present_character).offset().top - 75) + "px",
+				opacity: 0
+			}, 2000);
+			
+		}
+
 		function newPreviewElement(i) {
 			return (
 				"<div class='preview-character' id='preview-character-" + pos + "'>" + 
@@ -232,7 +248,7 @@
 				 	"<div class='preview-name' id='preview-name-" + pos + "'>" + 
 				 		characters[i].name + 
 				 	"</div>" + 
-				 	"<div class='preview-char-score' id='preview-char-score-'" + 
+				 	"<div class='preview-char-score' id='preview-char-score-" + 
 				 		(pos++) + "'>" + 
 				 		characters[i].score + 
 				 	"</div>" + 

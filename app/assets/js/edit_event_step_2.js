@@ -97,7 +97,7 @@
 					return;
 				}
 
-				$("#character_picture").attr("src", "/assets/images/loading.gif");
+				$("#character_picture").css("background-image", "url(/assets/images/loading.gif)");
 
 				var form = $('form')[0];
 				var formData = new FormData(form);
@@ -134,7 +134,7 @@
 
 			$("#extLinkButton").on("click", function() {
 				
-				$("#character_picture").attr("src", "/assets/images/loading.gif");
+				$("#character_picture").css("background-image", "url(/assets/images/loading.gif)");
 
 				$.ajax({
 				    url: "/api/users/" + user_id + "/events/" + current_event + "/link_images",
@@ -184,7 +184,7 @@
 
 	function draw_characters() {
 		$(".character-elem").off();
-		$("#character_picture").attr("src", "/assets/images/loading.gif");
+		$("#character_picture").css("background-image", "url(/assets/images/loading.gif)");
 
 
 		var html = "";
@@ -200,13 +200,13 @@
 
 		if(selected_character !== undefined) {
 			var my_character = get_selected_character();
-			$("#character_picture").attr("src", my_character.img);
+			$("#character_picture").css("background-image", "url(" + my_character.img + ")");
 			$("#character_picture").show();
 			$(".file_selector").attr("disabled", false);
 			$(".disablable").removeClass('btn-disabled');
 			$("#modalExtLinkButton").attr("data-toggle", "modal");
 		} else {
-			$("#character_picture").hide();
+			$("#character_picture").css("background-image", "none");
 			$(".file_selector").attr("disabled", true);
 			$(".disablable").addClass('btn-disabled');
 			$("#modalExtLinkButton").removeAttr("data-toggle");
