@@ -53,7 +53,13 @@ module.exports = function(server, ticket_factory, vote_factory) {
 			console.log(votes);
 			if(my_vote.addVote(character_id, votes)) {
 				socket.emit('successful_send_vote');
-				my_vote.emit_host('refresh', my_vote.getNotFinishedCharacters(), my_vote.event.characters, my_vote.character_votes);
+				let not_finished_chars = my_vote.getNotFinishedCharacters();
+				my_vote.emit_host('refresh', not_finished_chars, my_vote.event.characters, my_vote.character_votes);
+
+				if(not_finished_chars.length <= 0 && !my_vote.history_saved) {
+					my_vote.history_saved = true;
+					saveHistory();
+				}
 			}
 			else fatal_error('Internal error when processing your vote.');
 
@@ -113,6 +119,84 @@ module.exports = function(server, ticket_factory, vote_factory) {
 				}
 
 				if(cb) cb(new_vote);
+
+			});
+
+		}
+
+		// TODO test
+		function saveHistory(success_cb, error_cb) {
+
+			if(!my_vote) {
+				console.log("Error: not vote found!");
+				return;
+			}
+
+			MongoClient.connect(config.mongo_url, function(err, client) {
+
+
+				if(err) {
+					console.log(err);
+					console.log("Database broken. Please, contact the administrator or try it later.");
+					if(error_cb) error_cb();
+					return;		
+				}		
+
+				var db = client.db(config.mongo_name);
+
+				db.collection('users').findOne({_id: my_vote.host._id}, function(err, user_found) {
+					if(err) {
+						console.log(err);
+						console.log("Database broken. Please, contact the administrator or try it later.");
+						client.close();
+						if(error_cb) error_cb();
+						return;		
+					}
+
+					if(!user_found) {
+						console.log("User " + my_vote.host._id + " given does not exist. Dumping user...");
+						console.log(my_vote.host);
+						client.close();
+						if(error_cb) error_cb();
+						return;
+					}
+
+					var event_found = tools.searchEvent(user_found, my_vote.event._id);
+					if(!event_found) {
+						console.log("User " + my_vote.host._id + " has no event with ID " + my_vote.event._id + ". Dumping event...");
+						console.log(my_vote.event);
+						client.close();
+						if(error_cb) error_cb();
+						return;
+					}
+
+					if(!event_found.history) event_found.history = [];
+					let event = {
+						date: new Date(),
+						votes: my_vote.character_votes,
+						event_version: my_vote.event	
+					};
+
+					event_found.history.push(event);
+
+					db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
+
+						if(err) {
+							console.log(err);
+							console.log("Error while inserting the new history. Dumping vote...");
+							console.log(my_vote);
+							client.close();
+							return;     
+						} else {
+							if(success_cb) success_cb(db, client, user_found);
+							client.close();
+							return;
+						}
+
+					});
+
+
+				});
 
 			});
 
