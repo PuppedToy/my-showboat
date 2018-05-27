@@ -12,6 +12,7 @@ var VoteFactory = require('../lib/vote_factory');
 var ticket_factory = new TicketFactory();
 var vote_factory = new VoteFactory();
 var isImage = require('is-image');
+var xlsx = require('xlsx');
 
 const default_template = {
 	"title" : "Resultados",
@@ -718,6 +719,65 @@ Controller.prototype.upload_template_image = function(request, response) {
 				client.close();
 			});
 		});
+
+	});
+
+}
+
+Controller.prototype.get_history_xlsx = function(request, response) {
+
+	authenticateWithTicket(request, response, function(db, client, user_found) {
+		
+		var event_found = tools.searchEvent(user_found, request.params.eventId);
+
+		if(!event_found) {
+			responses.not_found(response, "Event requested has not been found");
+			return;
+		}
+
+		var history_found = event_found.history[request.params.historyId];
+		if(!history_found) {
+			responses.not_found(response, "Log requested has not been found");
+			return;
+		}
+
+		client.close();
+
+		fs.ensureDirSync('./xlsx');
+
+		let name = './xlsx/' + event_found.name.replace(/ /g, "_").toLowerCase() + "-" + user_found._id + event_found._id + request.params.historyId + '.xlsx'
+
+		let workbook = xlsx.utils.book_new();
+
+		let data = [], i = 1, char_ids = [];
+		data[0] = [''];
+		event_found.characters.forEach(character => {
+			data[0].push(character.name);
+			char_ids[character._id] = i;
+			data[i++] = [character.name];
+		});
+
+		event_found.characters.forEach(character => {
+			let i = char_ids[character._id];
+			history_found.votes.forEach(log => {
+				for(let j = 0; j < history_found.votes.length; j++) {
+					if(history_found.votes[j].character_id === character._id) {
+						let char_votes = history_found.votes[j].votes;
+						char_votes.forEach(vote => {
+							data[i][char_ids[vote.character_id]] = vote.vote;
+						});
+						break;
+					}
+				}
+			});
+		});
+
+		let worksheet = xlsx.utils.aoa_to_sheet(data);
+		xlsx.utils.book_append_sheet(workbook, worksheet, 'Scores');
+
+		xlsx.writeFile(workbook, name);
+		response.sendFile(name, {root: path.join(__dirname, '..')});
+		// fs.unlinkSync(name);
 
 	});
 

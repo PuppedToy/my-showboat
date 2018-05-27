@@ -36,6 +36,7 @@ module.exports = function (router, controller) {
 	router.post('/api/users/:userId/events/:eventId/logs/:logId', controller.get_log);
 	router.put('/api/users/:userId/events/:eventId/logs/:logId', controller.edit_log);
 	router.delete('/api/users/:userId/events/:eventId/logs/:logId', controller.delete_log);
+	router.post('/api/users/:userId/events/:eventId/history/:historyId/xlsx', controller.get_history_xlsx);
 
 	// Votes operations
 	router.get('/api/votes', controller.get_votelist);

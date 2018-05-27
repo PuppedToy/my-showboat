@@ -29,7 +29,8 @@
     "mongodb": "^3.0.1",
     "path": "^0.12.7",
     "run-sequence": "^2.2.0",
-    "socket.io": "^2.0.4"
+    "socket.io": "^2.0.4",
+    "xlsx": "^0.12.13"
   },
   "devDependencies": {},
   "scripts": {
