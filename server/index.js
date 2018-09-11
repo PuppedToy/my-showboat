@@ -16,34 +16,40 @@ const app = express();
 
 // If you need a backend, e.g. an API, add your custom backend-specific middleware here
 // app.use('/api', myApi);
+require('../api')(express, app, (ticket_factory, vote_factory) => {
 
-// In production we need to pass these values in instead of relying on webpack
-setup(app, {
-  outputPath: resolve(process.cwd(), 'build'),
-  publicPath: '/',
-});
+  // In production we need to pass these values in instead of relying on webpack
+  setup(app, {
+    outputPath: resolve(process.cwd(), 'build'),
+    publicPath: '/',
+  });
 
-// get the intended host and port number, use localhost and port 3000 if not provided
-const customHost = argv.host || process.env.HOST;
-const host = customHost || null; // Let http.Server use its default IPv6/4 host
-const prettyHost = customHost || 'localhost';
+  // get the intended host and port number, use localhost and port 3000 if not provided
+  const customHost = argv.host || process.env.HOST;
+  const host = customHost || null; // Let http.Server use its default IPv6/4 host
+  const prettyHost = customHost || 'localhost';
 
-// Start your app.
-app.listen(port, host, async err => {
-  if (err) {
-    return logger.error(err.message);
-  }
-
-  // Connect to ngrok in dev mode
-  if (ngrok) {
-    let url;
-    try {
-      url = await ngrok.connect(port);
-    } catch (e) {
-      return logger.error(e);
+  // Start your app.
+  const server = app.listen(port, host, async err => {
+    if (err) {
+      return logger.error(err.message);
     }
-    logger.appStarted(port, prettyHost, url);
-  } else {
-    logger.appStarted(port, prettyHost);
-  }
+
+    // Connect to ngrok in dev mode
+    if (ngrok) {
+      let url;
+      try {
+        url = await ngrok.connect(port);
+      } catch (e) {
+        return logger.error(e);
+      }
+      logger.appStarted(port, prettyHost, url);
+    } else {
+      logger.appStarted(port, prettyHost);
+    }
+  });
+  
+  const vote_app = require('../api/vote_app')(server, ticket_factory, vote_factory);
+  
 });
+
