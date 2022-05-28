@@ -1,23 +1,17 @@
 var del = require('del');
 var gulp = require('gulp');
 var uglify = require('gulp-uglify');
-var sass = require('gulp-sass');
+var sass = require('gulp-sass')(require('sass'));
 var concat = require('gulp-concat');
 var sourcemaps = require('gulp-sourcemaps');
 const autoprefixer = require('gulp-autoprefixer');
 var jshint = require('gulp-jshint');
-const imagemin = require('gulp-imagemin');
+// const imagemin = require('gulp-imagemin');
 var plumber = require('gulp-plumber');
-
-
-// Temporary solution until gulp 4
-// https://github.com/gulpjs/gulp/issues/355
-var runSequence = require('run-sequence');
-
+const runSequence = require('gulp4-run-sequence');
 
 var BUILD_PATH = './public/assets';
 var SOURCE_PATH = './app/assets';
-var DEBUG_MODE = false;
 
 gulp.task('default', function() {
   // place code for your default task here
@@ -57,7 +51,7 @@ gulp.task('build:js', function () {
 
 gulp.task('build:images', function () {
     return gulp.src(SOURCE_PATH + '/images/*')
-        .pipe(imagemin())
+        // .pipe(imagemin())
         .pipe(gulp.dest(BUILD_PATH + '/images'));
 });
 
@@ -77,9 +71,10 @@ gulp.task('build', function (cb) {
     );
 });
 
-gulp.task('watch', ['build'], function () {
-    gulp.watch(SOURCE_PATH + '/sass/**/*.scss', ['build:sass']);
-    gulp.watch(SOURCE_PATH + '/js/**/*.js', ['build:js']);
-});
+const watch =  function () {
+    gulp.watch(SOURCE_PATH + '/sass/**/*.scss', gulp.series('build:sass'));
+    gulp.watch(SOURCE_PATH + '/js/**/*.js', gulp.series('build:js'));
+};
+gulp.task('watch', gulp.series('build', watch));
 
-gulp.task('default', ['watch']);
+gulp.task('default', gulp.series('watch'));

@@ -531,7 +531,38 @@ $theme_color_6: #6F522D;
 
 		.adder {
 			position: absolute;
-			font-size: 4vh;
+			font-size: 12vh;
+		}
+
+		.progress-container {
+			position:absolute;
+			top: 4.5vh;
+			right: 5vw;
+			text-align:center;
+		
+			.Loading {
+				position:relative;
+				width: 30vw;
+				height: 28px;
+				background:rgba(255,255,255,.05);
+				border-radius:25px;
+				border:5px solid #1b1f23;
+				display: flex;
+				align-items: center;
+		
+				.load {
+					position:absolute;
+					width:0%;
+					height:100%;
+					background-color:#0fbcf9;
+					border-radius:25px;
+				}
+			}
+		
+			i {
+				color:#fff;
+				
+			}
 		}
 
 	}

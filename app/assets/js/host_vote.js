@@ -4,6 +4,9 @@
 
 	$(document).ready(function() {
 
+		const url = window.location.href.replace('host_vote', 'vote');
+			$("#ms-url").html(url);
+
 		checkConnection(function(response) {
 			ticket = Cookies.get("ticket");
 			setupLogout();
@@ -22,10 +25,8 @@
 
 	socket.on("create_vote_response", function(vote_id, characters_left, characters_, votes, event) {
 
-		console.log(event);
 		template = event.template;
 		characters = event.characters;
-		console.log(characters);
 		$("#vote_code_input").val(vote_id);
 		drawCharactersLeft(characters_left, characters, votes);
 
@@ -36,8 +37,6 @@
 	});
 
 	function drawCharactersLeft(characters_left, characters, votes) {
-
-		console.log(characters_left);
 
 		if(characters_left.length <= 0) {
 			prepareVote(votes);
@@ -81,12 +80,22 @@
 		preview();
 		scores = [];
 		votes.forEach(function(character_vote) {
-			console.log(character_vote);
 			character_vote.votes.forEach(function(vote) {
 				scores.push(vote);
 			});
 		});
 		scores = shuffle(scores);
+		const maxScores = scores.length;
+
+		const progressBarEnabled = Object.hasOwnProperty.call(template, "progress_bar") ? template.progress_bar.enabled : false;
+		if (!progressBarEnabled) {
+			$(".progress-container").hide();
+		}
+		else {
+			const progressBarColor = Object.hasOwnProperty.call(template, "progress_bar") ? template.progress_bar.color : '#c96d00';
+			$("#preview-load").css('background-color', progressBarColor);
+		}
+
 		var scores_interval = setInterval(function() {
 			if(scores.length == 0) {
 				present_character = -1;
@@ -102,7 +111,11 @@
 			});
 			present_character = get_character_position(next_score.character_id);
 			preview(next_score.vote);
-		}, 4000);
+			const loadingWidth = 100 - (scores.length*100/maxScores);
+			$('.Loading span').animate({
+				width : `${loadingWidth}%`,
+			},1000);
+		}, Object.hasOwnProperty.call(template, "time_votes") ? parseInt(template.time_votes)*1000 : 4000);
 	}
 
 	function get_character(i) {
@@ -131,7 +144,6 @@
 		if(template.background.link) {
 			$body.css("background-image", "url(" + template.background.link + ")");
 			if(!("type" in template.background)) template.background.type = "cover";
-			console.log(template.background.type);
 			switch(template.background.type) {
 				case "repeat":
 					$body.css("background-repeat", "repeat");
@@ -154,7 +166,10 @@
 			}
 		}
 		else $body.css("background-image", "none");
-		if(finished) $(".preview-title").html(template.title_finished);
+		if(finished) {
+			$(".preview-title").html(template.title_finished);
+			$(".progress-container").hide();
+		}
 		else $(".preview-title").html(template.title);
 		$(".preview-title").css("color", template.title_color || "#000");
 
@@ -251,7 +266,7 @@
 			$adder.animate({
 				top: ($("#preview-char-score-" + present_character).offset().top - 75) + "px",
 				opacity: 0
-			}, 2000);
+			}, Object.hasOwnProperty.call(template, "time_votes") ? parseInt(template.time_votes)*500 : 2000);
 			
 		}
 

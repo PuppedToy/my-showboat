@@ -180,8 +180,18 @@
 
 		$("#title").val(template.title);
 		$("#title_finished").val(template.title_finished);
+		$("#time_votes").val(template.time_votes || 4);
 		$("#title_color").val(template.title_color);
 		$("#number_characters").val(template.number_characters);
+		setChecked(
+			$("#progress_bar_enabled"), 
+			Object.hasOwnProperty.call(template, "progress_bar") ? template.progress_bar.enabled
+				: false
+		);
+		$("#progress_bar_color").val(
+			Object.hasOwnProperty.call(template, "progress_bar") ? template.progress_bar.color
+			: '#c96d00'
+		);
 		$("#winner_color").val(template.winner.color);
 		setChecked($("#winner_border_opacity"), template.winner.border_opacity);
 		$("#runnerup_color").val(template.runnerup.color);
@@ -206,10 +216,15 @@
 		var result = {
 			title: $("#title").val(),
 			title_finished: $("#title_finished").val(),
+			time_votes: $("#time_votes").val(),
 			title_color: $("#title_color").val(),
 			distribution_type: $("input:radio[name ='distribution_type']:checked").val(),
 			number_columns: $("#number_columns").val(),
 			number_characters: $("#number_characters").val(),
+			progress_bar: {
+				enabled: isChecked($('#progress_bar_enabled')),
+				color: $('#progress_bar_color').val(),
+			},
 			winner: {
 				color: $('#winner_color').val(),
 				border_opacity: isChecked($('#winner_border_opacity'))
