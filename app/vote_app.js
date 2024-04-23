@@ -1,7 +1,6 @@
 var mongo = require('mongodb');
-var MongoClient = mongo.MongoClient;
-var config = require('./config');
 var tools = require('../lib/api-tools');
+const getDatabase = require('../lib/database');
 
 module.exports = function(server, ticket_factory, vote_factory) {
 
@@ -14,12 +13,11 @@ module.exports = function(server, ticket_factory, vote_factory) {
 		var my_vote = null, my_guest = null;
 		var my_hosted_vote = null;
 
-		socket.on('create_vote', function(user_id, ticket, event_id) {
-			createVote(user_id, ticket, event_id, function(new_vote) {
-				socket.emit('create_vote_response', new_vote.id, new_vote.getNotFinishedCharacters(), new_vote.event.characters, new_vote.character_votes, new_vote.event);
-				my_hosted_vote = new_vote;
-				console.log("A new vote with id \"" + new_vote.id + "\" has been created!");
-			});
+		socket.on('create_vote', async function(user_id, ticket, event_id) {
+			const new_vote = await createVote(user_id, ticket, event_id);
+			socket.emit('create_vote_response', new_vote.id, new_vote.getNotFinishedCharacters(), new_vote.event.characters, new_vote.character_votes, new_vote.event);
+			my_hosted_vote = new_vote;
+			console.log("A new vote with id \"" + new_vote.id + "\" has been created!");
 		});
 
 		socket.on('introduce_code', function(code) {
@@ -101,108 +99,70 @@ module.exports = function(server, ticket_factory, vote_factory) {
 			socket.disconnect();
 		}
 
-		function createVote(user_id, ticket, event_id, cb) {
+		async function createVote(user_id, ticket, event_id) {
 
-			authenticateWithTicket(user_id, ticket, function(db, client, user_found) {
+			const user_found = await authenticateWithTicket(user_id, ticket);
+			var event = tools.searchEvent(user_found, event_id);
 
-				var event = tools.searchEvent(user_found, event_id);
+			if(!event) {
+				error("Could not find event " + event_id);
+				return;
+			}
 
-				if(!event) {
-					error("Could not find event " + event_id);
-					return;
-				}
+			var new_vote = vote_factory.newVote(event, user_found, ticket_factory.get_ticket(ticket), socket);
+			if(!new_vote) {
+				error("Could not create new vote for event " + event_id);
+				return;	
+			}
 
-				var new_vote = vote_factory.newVote(event, user_found, ticket_factory.get_ticket(ticket), socket);
-				if(!new_vote) {
-					error("Could not create new vote for event " + event_id);
-					return;	
-				}
-
-				if(cb) cb(new_vote);
-
-			});
+			return new_vote;
 
 		}
 
 		// TODO test
-		function saveHistory(success_cb, error_cb) {
+		async function saveHistory() {
 
 			if(!my_vote) {
 				console.log("Error: not vote found!");
 				return;
 			}
 
-			MongoClient.connect(config.mongo_url, function(err, client) {
+			try {
+				const db = await getDatabase();
+				const user_found = await db.collection('users').findOne({_id: my_vote.host._id});
 
+				if(!user_found) {
+					console.log("User " + my_vote.host._id + " given does not exist. Dumping user...");
+					console.log(my_vote.host);
+					return;
+				}
 
-				if(err) {
-					console.log(err);
-					console.log("Database broken. Please, contact the administrator or try it later.");
-					if(error_cb) error_cb();
-					return;		
-				}		
+				var event_found = tools.searchEvent(user_found, my_vote.event._id);
+				if(!event_found) {
+					console.log("User " + my_vote.host._id + " has no event with ID " + my_vote.event._id + ". Dumping event...");
+					console.log(my_vote.event);
+					return;
+				}
 
-				var db = client.db(config.mongo_name);
+				if(!event_found.history) event_found.history = [];
+				let event = {
+					date: new Date(),
+					votes: my_vote.character_votes,
+					event_version: my_vote.event	
+				};
+				event_found.history.push(event);
 
-				db.collection('users').findOne({_id: my_vote.host._id}, function(err, user_found) {
-					if(err) {
-						console.log(err);
-						console.log("Database broken. Please, contact the administrator or try it later.");
-						client.close();
-						if(error_cb) error_cb();
-						return;		
-					}
-
-					if(!user_found) {
-						console.log("User " + my_vote.host._id + " given does not exist. Dumping user...");
-						console.log(my_vote.host);
-						client.close();
-						if(error_cb) error_cb();
-						return;
-					}
-
-					var event_found = tools.searchEvent(user_found, my_vote.event._id);
-					if(!event_found) {
-						console.log("User " + my_vote.host._id + " has no event with ID " + my_vote.event._id + ". Dumping event...");
-						console.log(my_vote.event);
-						client.close();
-						if(error_cb) error_cb();
-						return;
-					}
-
-					if(!event_found.history) event_found.history = [];
-					let event = {
-						date: new Date(),
-						votes: my_vote.character_votes,
-						event_version: my_vote.event	
-					};
-
-					event_found.history.push(event);
-
-					db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
-
-						if(err) {
-							console.log(err);
-							console.log("Error while inserting the new history. Dumping vote...");
-							console.log(my_vote);
-							client.close();
-							return;     
-						} else {
-							if(success_cb) success_cb(db, client, user_found);
-							client.close();
-							return;
-						}
-
-					});
-
-
-				});
-
-			});
+				await db.collection('users').updateOne({_id: user_found._id}, {$set: user_found});
+				return user_found;
+			} catch (err) {
+				console.log(err);
+				console.log("Database broken. Please, contact the administrator or try it later.");
+				return;
+			}
 
 		}
 
-		function authenticateWithTicket(user_id, ticket, success_cb, error_cb) {
+		async function authenticateWithTicket(user_id, ticket) {
 
 			ticket = ticket_factory.get_ticket(ticket);
 
@@ -219,50 +179,25 @@ module.exports = function(server, ticket_factory, vote_factory) {
 				return;
 			}
 
-			MongoClient.connect(config.mongo_url, function(err, client) {
+			try {
+				const db = await getDatabase();
+				const user_found = await db.collection('users').findOne({_id: object_id});
 
-				if(err) {
-					console.log(err);
-					fatal_error("Database broken. Please, contact the administrator or try it later.");
-					if(error_cb) error_cb();
-					return;		
-				}		
+				if(!user_found) {
+					fatal_error("User given does not exist");
+					return;
+				}
 
-				var db = client.db(config.mongo_name);
+				if(ticket.name !== user_found.name) {
+					fatal_error("Ticket given is not valid or has expired");
+					return;
+				}
 
-				db.collection('users').findOne({_id: object_id}, function(err, user_found) {
-					if(err) {
-						console.log(err);
-						fatal_error("Database broken. Please, contact the administrator or try it later.");
-						client.close();
-						if(error_cb) error_cb();
-						return;		
-					}
-
-					if(!user_found) {
-						fatal_error("User given does not exist");
-						client.close();
-						if(error_cb) error_cb();
-						return;
-					}
-
-					if(ticket.name !== user_found.name) {
-						fatal_error("Ticket given is not valid or has expired");
-						client.close();
-						if(error_cb) error_cb();
-						return;
-					}
-
-					if(success_cb) success_cb(db, client, user_found);
-					else {
-						console.log("Successful authentication. Did you forget to add a callback?")
-						responses.ok(response);
-						client.close();
-					}
-
-				});
-
-			});
+				return user_found;
+			} catch (err) {
+				fatal_error("Database broken. Please, contact the administrator or try it later.");
+				return;
+			}
 
 		}
 

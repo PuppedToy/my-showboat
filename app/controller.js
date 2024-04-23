@@ -2,8 +2,6 @@ var fs = require('fs-extra');
 const path = require('path');
 var base_url, vote_factory;
 var mongo = require('mongodb');
-var MongoClient = mongo.MongoClient;
-var config = require('./config');
 var responses = require('../lib/api-responses');
 var tools = require('../lib/api-tools');
 var md5 = require('md5');
@@ -13,6 +11,7 @@ var ticket_factory = new TicketFactory();
 var vote_factory = new VoteFactory();
 var isImage = require('is-image');
 var xlsx = require('xlsx');
+const getDatabase = require('../lib/database');
 
 const default_template = {
 	"title" : "Resultados",
@@ -102,45 +101,30 @@ Controller.prototype.render_host_vote = function(request, response) {
 
 }
 
-Controller.prototype.get_userlist = function(request, response) {
+Controller.prototype.get_userlist = async function(request, response) {
 	
-	
-	MongoClient.connect(config.mongo_url, function(err, client) {
+	try {
+		const db = await getDatabase();
+		const users = await db.collection('users').find().toArray();
+		
+		const result = [];
 
-		var db = client.db(config.mongo_name);
-
-		if(err) {
-			console.log(err);
-			responses.database_error(response);
-			return;
-		}
-
-		db.collection('users').find().toArray(function (err, users) {
-
-			if(err) {
-				console.log(err);
-				responses.database_error(response);
-				return;
-			}
-
-			var result = [];
-
-			users.forEach(function(user) {
-				result.push({
-					name: user.name,
-					uri: tools.get_full_uri(request) + "/" + user._id 
-				});
+		users.forEach((user) => {
+			result.push({
+				name: user.name,
+				uri: tools.get_full_uri(request) + "/" + user._id 
 			});
-
-			responses.ok(response, result);
-
 		});
 
-	});
-	
+		responses.ok(response, result);
+	} catch (err) {
+		console.log(err);
+		responses.database_error(response);
+		return;
+	}
 }
 
-Controller.prototype.create_user = function(request, response) {
+Controller.prototype.create_user = async function(request, response) {
 
 	var user = request.body;
 
@@ -178,44 +162,29 @@ Controller.prototype.create_user = function(request, response) {
 		responses.bad_request(response, "Email address is not valid");
 		return;
 	}
-
-	MongoClient.connect(config.mongo_url, function(err, client) {
-
-		var db = client.db(config.mongo_name);
-
-		if(err) {
-			console.log(err);
-			responses.database_error(response);
+	
+	try {
+		const db = await getDatabase();
+		const entry = await db.collection('users').findOne({name: user.name});
+		if(entry != null) {
+			responses.conflict(response, "Username already taken");
 			return;
 		}
+		var instered_object = {
+			name: user.name,
+			password: md5(user.password)
+		}
 
-		db.collection('users').findOne({name: user.name}, function(err, entry) {
-			if(entry != null) {
-				responses.conflict(response, "Username already taken");
-				return;
-			}
+		if(user.email) instered_object.email = user.email;
 
-			var instered_object = {
-				name: user.name,
-				password: md5(user.password)
-			}
-
-			if(user.email) instered_object.email = user.email;
-
-			db.collection('users').insertOne(instered_object, function(err) {
-				if(err) {
-					console.log(err);
-					responses.database_error(response);
-					return;
-				}
-
-				var ticket = ticket_factory.add_ticket(user.name, instered_object._id);
-				responses.created(response, {ticket: ticket.id, id: instered_object._id});
-			});
-		});
-
-	});
-	
+		const insert_result = await db.collection('users').insertOne(instered_object);
+		const ticket = ticket_factory.add_ticket(user.name, insert_result.insertedId);
+		responses.created(response, {ticket: ticket.id, id: insert_result.insertedId});
+	} catch (err) {
+		console.log(err);
+		responses.database_error(response);
+		return;
+	}
 }
 
 
@@ -243,19 +212,11 @@ Controller.prototype.delete_user = function(request, response) {
 }
 
 
-Controller.prototype.user_login = function(request, response) {
+Controller.prototype.user_login = async function(request, response) {
 	
-	MongoClient.connect(config.mongo_url, function(err, client) {
-
-		var db = client.db(config.mongo_name);
-
-		if(err) {
-			console.log(err);
-			responses.database_error(response);
-			return;
-		}
-
-		var user = request.body;
+	try {
+		const db = await getDatabase();
+		const user = request.body;
 
 		if(!user.name) {
 			responses.bad_request(response, "Username is missing");
@@ -267,30 +228,24 @@ Controller.prototype.user_login = function(request, response) {
 			return;
 		}
 
-		db.collection('users').findOne({name: user.name}, function(err, user_found) {
+		const user_found = await db.collection('users').findOne({name: user.name});
 
-			if(err) {
-				console.log(err);
-				responses.database_error(response);
-				return;     
-			}
+		if(!user_found) {
+			responses.not_found(response, "User requested does not exist");
+			return;
+		}
 
-			if(!user_found) {
-				responses.not_found(response, "User requested does not exist");
-				return;
-			}
-
-			if(md5(user.password) === user_found.password) {
-				var ticket = ticket_factory.add_ticket(user.name, user_found._id);
-				responses.ok(response, {ticket: ticket.id, id: user_found._id});
-			} else {
-				responses.unauthorized(response);
-			}
-
-		});
-
-	});
-	
+		if(md5(user.password) === user_found.password) {
+			const ticket = ticket_factory.add_ticket(user.name, user_found._id);
+			responses.ok(response, {ticket: ticket.id, id: user_found._id});
+		} else {
+			responses.unauthorized(response);
+		}
+	} catch (err) {
+		console.log(err);
+		responses.database_error(response);
+		return;
+	}
 }
 
 Controller.prototype.user_logout = function(request, response) {
@@ -328,458 +283,392 @@ Controller.prototype.check_ticket = function(request, response) {
 
 }
 
-Controller.prototype.get_eventlist = function(request, response) {
+Controller.prototype.get_eventlist = async function(request, response) {
 
-	authenticateWithTicket(request, response, function(db, client, user_found) {
+	const user_found = await authenticateWithTicket(request, response);
 
-		if(!user_found.events) {
-			responses.ok(response, {events: []});
-		} else {
-			var eventlist = [];
+	if(!user_found.events) {
+		responses.ok(response, {events: []});
+	} else {
+		var eventlist = [];
 
-			user_found.events.forEach(function(event) {
-				eventlist.push({
-					name: event.name,
-					uri: tools.get_base_uri(request) + "/api/users/" + request.params.userId + "/events/" + event._id,
-					id: event._id
-				});
+		user_found.events.forEach(function(event) {
+			eventlist.push({
+				name: event.name,
+				uri: tools.get_base_uri(request) + "/api/users/" + request.params.userId + "/events/" + event._id,
+				id: event._id
 			});
-
-			responses.ok(response, {events: eventlist});
-		}
-
-		client.close();
-
-	});
-	
-}
-
-
-Controller.prototype.create_event = function(request, response) {
-
-	authenticateWithTicket(request, response, function(db, client, user_found) {
-
-		if(!user_found.events) user_found.events = [];
-		var new_id = 1;
-		if(user_found.events.length > 0) new_id = user_found.events[user_found.events.length - 1]._id + 1;
-		var new_event = {_id: new_id, name: "My Event " + new_id, template: default_template};
-		user_found.events.push(new_event);
-
-		db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
-
-			if(err) {
-				console.log(err);
-				responses.database_error(response);
-				client.close();
-				return;     
-			} else {
-				responses.created(response, {id: new_event._id, name: new_event.name});
-				client.close();
-				return;
-			}
-
 		});
 
-	});
+		responses.ok(response, {events: eventlist});
+	}
+}
+
+
+Controller.prototype.create_event = async function(request, response) {
+
+	const user_found = await authenticateWithTicket(request, response);
+
+	if(!user_found.events) user_found.events = [];
+	var new_id = 1;
+	if(user_found.events.length > 0) new_id = user_found.events[user_found.events.length - 1]._id + 1;
+	var new_event = {_id: new_id, name: "My Event " + new_id, template: default_template};
+	user_found.events.push(new_event);
+
+	try {
+		const db = await getDatabase();
+		await db.collection('users').updateOne({_id: user_found._id}, {$set: user_found});
+
+		responses.created(response, {id: new_event._id, name: new_event.name});
+		return;
+	} catch (err) {
+		console.log(err);
+		responses.database_error(response);
+		return;
+	}
+	
+}
+
+Controller.prototype.get_event = async function(request, response) {
+
+	const user_found = await authenticateWithTicket(request, response);
+	var event_found = tools.searchEvent(user_found, request.params.eventId);
+
+	if(event_found) {
+		responses.ok(response, event_found);
+	} else {
+		responses.not_found(response, "Event requested has not been found");
+	}
+
+}
+
+
+Controller.prototype.edit_event = async function(request, response) {
+
+	const user_found = await authenticateWithTicket(request, response);
+	var event_found = tools.searchEvent(user_found, request.params.eventId);
+
+	if(request.body.update) {
+		for(var key in request.body.update) {
+			event_found[key] = request.body.update[key];
+		}
+	}
+
+	if(!event_found) {
+		responses.not_found(response, "Event requested has not been found");
+		return;
+	}
+
+	try {
+		const db = await getDatabase();
+		await db.collection('users').updateOne({_id: user_found._id}, {$set: user_found});
+		responses.ok(response);
+	} catch (err) {
+		console.log(err);
+		responses.database_error(response);
+		return;
+	}
 	
 }
 
 
-Controller.prototype.get_event = function(request, response) {
-
-	authenticateWithTicket(request, response, function(db, client, user_found) {
-
-		var event_found = tools.searchEvent(user_found, request.params.eventId);
-
-		if(event_found) {
-			responses.ok(response, event_found);
-		} else {
-			responses.not_found(response, "Event requested has not been found");
-		}
-
-		client.close();
-
-	});
-	
-}
-
-
-Controller.prototype.edit_event = function(request, response) {
-
-	authenticateWithTicket(request, response, function(db, client, user_found) {
-
-		var event_found = tools.searchEvent(user_found, request.params.eventId);
-
-		if(request.body.update) {
-			for(var key in request.body.update) {
-				event_found[key] = request.body.update[key];
-			}
-		}
-
-		if(event_found) {
-			db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
-				if(err) {
-					console.log(err);
-					responses.database_error(response);
-					client.close();
-					return;     
-				}
-
-				responses.ok(response);
-			});
-		} else {
-			responses.not_found(response, "Event requested has not been found");
-		}
-
-		client.close();
-
-	});
-	
-}
-
-
-Controller.prototype.delete_event = function(request, response) {
+Controller.prototype.delete_event = async function(request, response) {
 
 	// TODO remove images of all characters involved. 
 	// How can I the image of a deleted character if the call is edit? Must think about it
+
+	const user_found = authenticateWithTicket(request, response);
 	
-	authenticateWithTicket(request, response, function(db, client, user_found) {
+	if(!user_found.events) user_found.events = [];
 
-		if(!user_found.events) user_found.events = [];
+	var deleted = false;
 
-		var deleted = false;
-
-		for(var i = 0; !deleted && i < user_found.events.length; i++) {
-			if(user_found.events[i]._id == request.params.eventId) {
-				deleted = true;
-				user_found.events.splice(i, 1);
-			}
+	for(var i = 0; !deleted && i < user_found.events.length; i++) {
+		if(user_found.events[i]._id == request.params.eventId) {
+			deleted = true;
+			user_found.events.splice(i, 1);
 		}
+	}
 
-		if(deleted) {
-			db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
+	if(!deleted) {
+		responses.not_found(response, "Event requested has not been found");
+		return;
+	}
 
-				if(err) {
-					console.log(err);
-					responses.database_error(response);
-					client.close();
-					return;
-				} else {
-					responses.ok(response);
-					client.close();
-					return;
-				}
-
-			});
-		} else {
-			responses.not_found(response, "Event requested has not been found");
-			client.close();
-		}       
-
-	});
+	try {
+		const db = await getDatabase();
+		await db.collection('users').updateOne({_id: user_found._id}, {$set: user_found});
+		responses.ok(response);
+	} catch (err) {
+		console.log(err);
+		responses.database_error(response);
+		return;
+	}
 
 }
 
-Controller.prototype.upload_link_image = function(request, response) {
+Controller.prototype.upload_link_image = async function(request, response) {
 
-	authenticateWithTicket(request, response, function(db, client, user_found) {
+	const user_found = await authenticateWithTicket(request, response);
+	var event_found = tools.searchEvent(user_found, request.params.eventId);
 
-		var event_found = tools.searchEvent(user_found, request.params.eventId);
+	if(!event_found) {
+		responses.not_found(response, "Event requested has not been found");
+		return;
+	}
 
-		if(!event_found) {
-			responses.not_found(response, "Event requested has not been found");
-			client.close();
-			return;
-		}
+	var character_found = tools.searchCharacter(event_found, request.body.character);
 
-		var character_found = tools.searchCharacter(event_found, request.body.character);
+	if(!character_found) {
+		responses.not_found(response, "The character requested does not exist");
+		return;
+	}
 
-		if(!character_found) {
-			responses.not_found(response, "The character requested does not exist");
-			client.close();
-			return;
-		}
+	var new_link = request.body.new_link;
 
-		var new_link = request.body.new_link;
+	if(!new_link) {
+		responses.bad_request(response, "Missing \"new_link\"");
+		return;
+	}
 
-		if(!new_link) {
-			responses.bad_request(response, "Missing \"new_link\"");
-			client.close();
-			return;
-		}
+	if(!deleteImage(character_found, response)) return;
 
-		if(!deleteImage(character_found, response, client)) return;
+	character_found.img = new_link;
 
-		character_found.img = new_link;
-
-		db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
-			if(err) {
-				console.log(err);
-				responses.database_error(response);
-				client.close();
-				return;     
-			}
-
-			responses.ok(response, event_found);
-			client.close();
-		});
-
-	});
+	try {
+		const db = await getDatabase();
+		await db.collection('users').updateOne({_id: user_found._id}, {$set: user_found});
+		responses.ok(response, event_found);
+	} catch (err) {
+		console.log(err);
+		responses.database_error(response);
+		return;
+	}
 
 }
 
-Controller.prototype.remove_template_image = function(request, response) {
+Controller.prototype.remove_template_image = async function(request, response) {
+
+	const user_found = await authenticateWithTicket(request, response);
 	
-	authenticateWithTicket(request, response, function(db, client, user_found) {
+	var event_found = tools.searchEvent(user_found, request.params.eventId);
 
-		var event_found = tools.searchEvent(user_found, request.params.eventId);
+	if(!event_found) {
+		responses.not_found(response, "Event requested has not been found");
+		return;
+	}
 
-		if(!event_found) {
-			responses.not_found(response, "Event requested has not been found");
-			client.close();
+	if(!deleteImageTemplate(event_found.template, response)) return;
+	event_found.template.background.link = "";
+
+	try {
+		const db = await getDatabase();
+		await db.collection('users').updateOne({_id: user_found._id}, {$set: user_found});
+		responses.ok(response, event_found);
+	} catch (err) {
+		console.log(err);
+		responses.database_error(response);
+		return;
+	}
+
+}
+
+Controller.prototype.upload_image = async function(request, response) {
+
+	const user_found = await authenticateWithTicket(request, response);
+
+	var event_found = tools.searchEvent(user_found, request.params.eventId);
+
+	if(!event_found) {
+		responses.not_found(response, "Event requested has not been found");
+		return;
+	}
+
+	var character_found = tools.searchCharacter(event_found, request.body.character);
+
+	if(!character_found) {
+		responses.not_found(response, "The character requested does not exist");
+		return;
+	}
+
+	if(!request.files || !request.files.uploadedFile) {
+		responses.bad_request(response, 'No files were uploaded.');
+		return;
+	}
+
+	var uploadedFile = request.files.uploadedFile;
+
+	if(!isImage(uploadedFile.name)) { // Dunno if this works
+		responses.bad_request(response, 'The file uploaded is not an image.');
+		return;
+	}
+
+	var image_name = request.params.userId + "-" + request.params.eventId + "-" + character_found._id + "-" + parseInt(Math.random()*35000) + ".png";
+	var image_path = path.join(path.resolve('./public/assets/custom_images/'), image_name);
+	var image_uri = '/assets/custom_images/' + image_name;
+
+	if(!deleteImage(character_found, response)) return;
+
+	uploadedFile.mv(image_path, async function(err) {
+		if (err) {
+			console.log(err);
+			responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
 			return;
 		}
 
-		if(!deleteImageTemplate(event_found.template, response, client)) return;
-		event_found.template.background.link = "";
+		character_found.img = image_uri;
 
-		db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
-			if(err) {
-				console.log(err);
-				responses.database_error(response);
-				client.close();
-				return;     
-			}
-
+		try {
+			const db = await getDatabase();
+			await db.collection('users').updateOne({_id: user_found._id}, {$set: user_found});
 			responses.ok(response, event_found);
-			client.close();
-		});
-
+		} catch (err) {
+			console.log(err);
+			responses.database_error(response);
+			return;
+		}
 	});
 
 }
 
-Controller.prototype.upload_image = function(request, response) {
+Controller.prototype.upload_link_template_image = async function(request, response) {
 
-	authenticateWithTicket(request, response, function(db, client, user_found) {
+	const user_found = await authenticateWithTicket(request, response);
 
-		var event_found = tools.searchEvent(user_found, request.params.eventId);
+	var event_found = tools.searchEvent(user_found, request.params.eventId);
 
-		if(!event_found) {
-			responses.not_found(response, "Event requested has not been found");
-			client.close();
-			return;
-		}
+	if(!event_found) {
+		responses.not_found(response, "Event requested has not been found");
+		return;
+	}
 
-		var character_found = tools.searchCharacter(event_found, request.body.character);
+	var new_link = request.body.new_link;
 
-		if(!character_found) {
-			responses.not_found(response, "The character requested does not exist");
-			client.close();
-			return;
-		}
+	if(!new_link) {
+		responses.bad_request(response, "Missing \"new_link\"");
+		return;
+	}
 
-		if(!request.files || !request.files.uploadedFile) {
-			responses.bad_request(response, 'No files were uploaded.');
-			client.close();
-			return;
-		}
+	if(!deleteImageTemplate(event_found.template, response)) return;
 
-		var uploadedFile = request.files.uploadedFile;
+	event_found.template.background.link = new_link;
 
-		if(!isImage(uploadedFile.name)) { // Dunno if this works
-			responses.bad_request(response, 'The file uploaded is not an image.');
-			client.close();
-			return;
-		}
-
-		var image_name = request.params.userId + "-" + request.params.eventId + "-" + character_found._id + "-" + parseInt(Math.random()*35000) + ".png";
-		var image_path = path.join(path.resolve('./public/assets/custom_images/'), image_name);
-		var image_uri = '/assets/custom_images/' + image_name;
-
-		if(!deleteImage(character_found, response, client)) return;
-
-		uploadedFile.mv(image_path, function(err) {
-			if (err) {
-				console.log(err);
-				responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
-				client.close();
-				return;
-			}
-
-			character_found.img = image_uri;
-
-			db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
-				if(err) {
-					console.log(err);
-					responses.database_error(response);
-					client.close();
-					return;     
-				}
-
-				responses.ok(response, event_found);
-				client.close();
-			});
-		});
-	});
+	try {
+		const db = await getDatabase();
+		await db.collection('users').updateOne({_id: user_found._id}, {$set: user_found});
+		responses.ok(response, event_found);
+	} catch (err) {
+		console.log(err);
+		responses.database_error(response);
+		return;
+	}
 
 }
 
-Controller.prototype.upload_link_template_image = function(request, response) {
+Controller.prototype.upload_template_image = async function(request, response) {
 
-	authenticateWithTicket(request, response, function(db, client, user_found) {
+	const user_found = await authenticateWithTicket(request, response);
 
-		var event_found = tools.searchEvent(user_found, request.params.eventId);
+	var event_found = tools.searchEvent(user_found, request.params.eventId);
 
-		if(!event_found) {
-			responses.not_found(response, "Event requested has not been found");
-			client.close();
+	if(!event_found) {
+		responses.not_found(response, "Event requested has not been found");
+		return;
+	}
+
+	if(!request.files || !request.files.uploadedFile) {
+		responses.bad_request(response, 'No files were uploaded.');
+		return;
+	}
+
+	var uploadedFile = request.files.uploadedFile;
+
+	if(!isImage(uploadedFile.name)) { // Dunno if this works
+		responses.bad_request(response, 'The file uploaded is not an image.');
+		return;
+	}
+
+	var image_name = "template-" + request.params.eventId + "-" + parseInt(Math.random()*35000) + ".png";
+	var image_path = path.join(path.resolve('./public/assets/custom_images/'), image_name);
+	var image_uri = '/assets/custom_images/' + image_name;
+
+	if(!deleteImageTemplate(event_found.template, response)) return;
+
+	uploadedFile.mv(image_path, async function(err) {
+		if (err) {
+			console.log(err);
+			responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
 			return;
 		}
 
-		var new_link = request.body.new_link;
+		event_found.template.background.link = image_uri;
 
-		if(!new_link) {
-			responses.bad_request(response, "Missing \"new_link\"");
-			client.close();
-			return;
-		}
-
-		if(!deleteImageTemplate(event_found.template, response, client)) return;
-
-		event_found.template.background.link = new_link;
-
-		db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
-			if(err) {
-				console.log(err);
-				responses.database_error(response);
-				client.close();
-				return;     
-			}
-
+		try {
+			const db = await getDatabase();
+			await db.collection('users').updateOne({_id: user_found._id}, {$set: user_found});
 			responses.ok(response, event_found);
-			client.close();
-		});
-
+		} catch (err) {
+			console.log(err);
+			responses.database_error(response);
+			return;
+		}
 	});
 
 }
 
-Controller.prototype.upload_template_image = function(request, response) {
+Controller.prototype.get_history_xlsx = async function(request, response) {
 
-	authenticateWithTicket(request, response, function(db, client, user_found) {
+	const user_found = await authenticateWithTicket(request, response);
 
-		var event_found = tools.searchEvent(user_found, request.params.eventId);
+	var event_found = tools.searchEvent(user_found, request.params.eventId);
 
-		if(!event_found) {
-			responses.not_found(response, "Event requested has not been found");
-			client.close();
-			return;
-		}
+	if(!event_found) {
+		responses.not_found(response, "Event requested has not been found");
+		return;
+	}
 
-		if(!request.files || !request.files.uploadedFile) {
-			responses.bad_request(response, 'No files were uploaded.');
-			client.close();
-			return;
-		}
+	var history_found = event_found.history[request.params.historyId];
+	if(!history_found) {
+		responses.not_found(response, "Log requested has not been found");
+		return;
+	}
 
-		var uploadedFile = request.files.uploadedFile;
 
-		if(!isImage(uploadedFile.name)) { // Dunno if this works
-			responses.bad_request(response, 'The file uploaded is not an image.');
-			client.close();
-			return;
-		}
+	fs.ensureDirSync('./xlsx');
 
-		var image_name = "template-" + request.params.eventId + "-" + parseInt(Math.random()*35000) + ".png";
-		var image_path = path.join(path.resolve('./public/assets/custom_images/'), image_name);
-		var image_uri = '/assets/custom_images/' + image_name;
+	let name = './xlsx/' + event_found.name.replace(/ /g, "_").toLowerCase() + "-" + user_found._id + event_found._id + request.params.historyId + '.xlsx'
 
-		if(!deleteImageTemplate(event_found.template, response, client)) return;
+	let workbook = xlsx.utils.book_new();
 
-		uploadedFile.mv(image_path, function(err) {
-			if (err) {
-				console.log(err);
-				responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
-				client.close();
-				return;
+	let data = [], i = 1, char_ids = [];
+	data[0] = [''];
+	event_found.characters.forEach(character => {
+		data[0].push(character.name);
+		char_ids[character._id] = i;
+		data[i++] = [character.name];
+	});
+
+	event_found.characters.forEach(character => {
+		let i = char_ids[character._id];
+		history_found.votes.forEach(log => {
+			for(let j = 0; j < history_found.votes.length; j++) {
+				if(history_found.votes[j].character_id === character._id) {
+					let char_votes = history_found.votes[j].votes;
+					char_votes.forEach(vote => {
+						data[i][char_ids[vote.character_id]] = vote.vote;
+					});
+					break;
+				}
 			}
-
-			event_found.template.background.link = image_uri;
-
-			db.collection('users').updateOne({_id: user_found._id}, {$set: user_found}, function(err) {
-				if(err) {
-					console.log(err);
-					responses.database_error(response);
-					client.close();
-					return;     
-				}
-
-				responses.ok(response, event_found);
-				client.close();
-			});
 		});
-
 	});
 
-}
+	let worksheet = xlsx.utils.aoa_to_sheet(data);
+	xlsx.utils.book_append_sheet(workbook, worksheet, 'Scores');
 
-Controller.prototype.get_history_xlsx = function(request, response) {
-
-	authenticateWithTicket(request, response, function(db, client, user_found) {
-		
-		var event_found = tools.searchEvent(user_found, request.params.eventId);
-
-		if(!event_found) {
-			responses.not_found(response, "Event requested has not been found");
-			return;
-		}
-
-		var history_found = event_found.history[request.params.historyId];
-		if(!history_found) {
-			responses.not_found(response, "Log requested has not been found");
-			return;
-		}
-
-		client.close();
-
-		fs.ensureDirSync('./xlsx');
-
-		let name = './xlsx/' + event_found.name.replace(/ /g, "_").toLowerCase() + "-" + user_found._id + event_found._id + request.params.historyId + '.xlsx'
-
-		let workbook = xlsx.utils.book_new();
-
-		let data = [], i = 1, char_ids = [];
-		data[0] = [''];
-		event_found.characters.forEach(character => {
-			data[0].push(character.name);
-			char_ids[character._id] = i;
-			data[i++] = [character.name];
-		});
-
-		event_found.characters.forEach(character => {
-			let i = char_ids[character._id];
-			history_found.votes.forEach(log => {
-				for(let j = 0; j < history_found.votes.length; j++) {
-					if(history_found.votes[j].character_id === character._id) {
-						let char_votes = history_found.votes[j].votes;
-						char_votes.forEach(vote => {
-							data[i][char_ids[vote.character_id]] = vote.vote;
-						});
-						break;
-					}
-				}
-			});
-		});
-
-		let worksheet = xlsx.utils.aoa_to_sheet(data);
-		xlsx.utils.book_append_sheet(workbook, worksheet, 'Scores');
-
-		xlsx.writeFile(workbook, name);
-		response.sendFile(name, {root: path.join(__dirname, '..')});
-		// fs.unlinkSync(name);
-
-	});
+	xlsx.writeFile(workbook, name);
+	response.sendFile(name, {root: path.join(__dirname, '..')});
+	// fs.unlinkSync(name);
 
 }
 
@@ -864,7 +753,7 @@ Controller.prototype.delete_vote = function(request, response) {
 
 module.exports = Controller;
 
-function deleteImage(character, response, client) {
+function deleteImage(character, response) {
 
 	if(character.img && character.img.indexOf('/assets/custom_images') === 0) {
 		try {
@@ -872,28 +761,23 @@ function deleteImage(character, response, client) {
 		} catch(err) {
 			console.log(err);
 			responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
-			client.close();
 			character.img = "/assets/images/man-1.png";         
 			return false;
 		}
 
 		try {
 			fs.unlinkSync(character.img.replace('/assets/custom_images', path.resolve('./public/assets/custom_images')));
-			character.img = "/assets/images/man-1.png";         
-			return true;
 		} catch (err) {
-			console.log(err);
-			responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
-			client.close();
-			character.img = "/assets/images/man-1.png";         
-			return false;
+			console.error(err);
 		}
+		character.img = "/assets/images/man-1.png";         
+		return true;
 	} 
 
 	return true;
 }
 
-function deleteImageTemplate(template, response, client) {
+function deleteImageTemplate(template, response) {
 
 	if(template.background.link && template.background.link.indexOf('/assets/custom_images') === 0) {
 		try {
@@ -901,7 +785,6 @@ function deleteImageTemplate(template, response, client) {
 		} catch(err) {
 			console.log(err);
 			responses.internal_server_error(response, "Error when uploading image. Please contact the admin.");
-			client.close();
 			return false;
 		}
 
@@ -917,10 +800,9 @@ function deleteImageTemplate(template, response, client) {
 	return true;
 }
 
-function authenticateWithTicket(request, response, success_cb, error_cb) {
+async function authenticateWithTicket(request, response) {
 
 	var user_id = request.params.userId;
-	var event_id = request.params.eventId;
 	var ticket = ticket_factory.get_ticket(request.body.ticket);
 
 	if(!ticket) {
@@ -936,50 +818,25 @@ function authenticateWithTicket(request, response, success_cb, error_cb) {
 		return;
 	}
 
-	MongoClient.connect(config.mongo_url, function(err, client) {
+	try {
+		const db = await getDatabase();
+		const user_found = await db.collection('users').findOne({_id: object_id});
 
-		if(err) {
-			console.log(err);
-			responses.database_error(response);
-			if(error_cb) error_cb();
-			return;     
-		}       
+		if(!user_found) {
+			responses.not_found(response, "User given does not exist");
+			return;
+		}
 
-		var db = client.db(config.mongo_name);
+		if(ticket.name !== user_found.name) {
+			responses.unauthorized(response, "Ticket given is not valid or has expired");
+			return;
+		}
 
-		db.collection('users').findOne({_id: object_id}, function(err, user_found) {
-			if(err) {
-				console.log(err);
-				responses.database_error(response);
-				client.close();
-				if(error_cb) error_cb();
-				return;     
-			}
-
-			if(!user_found) {
-				responses.not_found(response, "User given does not exist");
-				client.close();
-				if(error_cb) error_cb();
-				return;
-			}
-
-			if(ticket.name !== user_found.name) {
-				responses.unauthorized(response, "Ticket given is not valid or has expired");
-				client.close();
-				if(error_cb) error_cb();
-				return;
-			}
-
-			if(success_cb) success_cb(db, client, user_found);
-			else {
-				console.log("Successful authentication. Did you forget to add a callback?")
-				responses.ok(response);
-				client.close();
-			}
-
-		});
-
-	});
-
+		return user_found;
+	} catch (err) {
+		console.log(err);
+		responses.database_error(response);
+		return;
+	}
 }
 
